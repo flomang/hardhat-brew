@@ -5,6 +5,7 @@ import { Counter } from "../typechain/Counter";
 
 chai.use(solidity);
 const { expect } = chai;
+
 describe("Counter", () => {
   let counter: Counter;
   beforeEach(async () => {
