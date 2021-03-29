@@ -42,8 +42,8 @@ contract Purchase {
     }
 
     event Aborted();
-    event PurchaseConfirmed();
-    event ItemReceived();
+    event PurchaseConfirmed(address buyer, uint value);
+    event ItemReceived(address buyer, uint value);
     event SellerRefunded();
 
     // Ensure that `msg.value` is an even number.
@@ -85,7 +85,7 @@ contract Purchase {
         condition(msg.value == (2 * value))
         payable
     {
-        emit PurchaseConfirmed();
+        emit PurchaseConfirmed(msg.sender, value);
         buyer = payable(msg.sender);
         state = State.Locked;
     }
@@ -97,7 +97,7 @@ contract Purchase {
         onlyBuyer
         inState(State.Locked)
     {
-        emit ItemReceived();
+        emit ItemReceived(buyer, value);
         // It is important to change the state first because
         // otherwise, the contracts called using `send` below
         // can call in again here.
