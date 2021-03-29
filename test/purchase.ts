@@ -22,11 +22,19 @@ describe("Purchase", () => {
     purchase = await waffle.deployContract(accounts[0], contractJson, [], {value: 10})
   });
 
-  describe("Deployment", async () => {
+  describe("deployment", async () => {
     it("should set contract value to 5", async () => {
       //await counter.countUp();
       //let count = await counter.getCount();
       expect(await purchase.value()).to.eq(5);
+    });
+  });
+
+  describe("confirm", async () => {
+    it("should check value condition", async () => {
+      //await counter.countUp();
+      //let count = await counter.getCount();
+      expect(await purchase.confirmPurchase({value: 10})).to.emit(purchase, "PurchaseConfirmed")
     });
   });
 });
