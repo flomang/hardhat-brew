@@ -31,7 +31,7 @@ describe("Purchase", () => {
       await expect(await purchase.state()).to.eq(1);
     });
 
-    it("should confirm recieve by the buyer", async () => {
+    it("should confirm recieve by the buyer and refund seller", async () => {
       await expect(await purchase.connect(accounts[1]).confirmPurchase({value: 10}));
       await expect(await purchase.connect(accounts[1]).confirmReceived())
         .to.emit(purchase, "ItemReceived").withArgs(accounts[1].getAddress, 5)
@@ -46,7 +46,7 @@ describe("Purchase", () => {
       await expect(await purchase.state()).to.eq(3);
     });
 
-    it("should revert if wrong seller", async () => {
+    it("should revert refundSeller when wrong seller", async () => {
         await expect(await purchase.connect(accounts[1]).confirmPurchase({value: 10}));
         await expect(await purchase.connect(accounts[1]).confirmReceived())
           .to.emit(purchase, "ItemReceived").withArgs(accounts[1].getAddress, 5)
@@ -59,7 +59,7 @@ describe("Purchase", () => {
         await expect(purchase.connect(accounts[0]).abort()).to.be.revertedWith("Invalid state.");
     });
 
-    it("should revert if wrong state", async () => {
+    it("should revert abort when in wrong state", async () => {
         await expect(await purchase.connect(accounts[1]).confirmPurchase({value: 10}));
         await expect(purchase.connect(accounts[0]).abort()).to.be.revertedWith("Invalid state.");
         await expect(await purchase.state()).to.eq(1);
