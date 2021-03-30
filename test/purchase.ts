@@ -65,6 +65,11 @@ describe("Purchase", () => {
         await expect(await purchase.state()).to.eq(1);
     });
 
+    it("should revert confirmReceived when no buyer", async () => {
+        await expect(purchase.connect(accounts[1]).confirmReceived()).to.be.revertedWith("Only buyer can call this.");
+        await expect(await purchase.state()).to.eq(0);
+    });
+
     it("should revert abort when in wrong state", async () => {
         await expect(await purchase.connect(accounts[1]).confirmPurchase({value: 10}));
         await expect(purchase.connect(accounts[0]).abort()).to.be.revertedWith("Invalid state.");
