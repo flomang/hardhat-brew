@@ -2,6 +2,8 @@
 pragma solidity 0.7.4;
 pragma experimental ABIEncoderV2;
 
+import "hardhat/console.sol";
+
 contract Delance {
     
     bool locked = false;
@@ -34,6 +36,9 @@ contract Delance {
     event RequestPaid(address receiver, uint256 amount);
     
     constructor(address payable _freelancer, uint _deadline) payable {
+        //console.log("Delance constructor freelancer is:", _freelancer);
+        //console.log("Delance constructor deadline:", _deadline);
+
         freelancer = _freelancer;
         deadline = _deadline;
         employer = msg.sender;
@@ -42,6 +47,7 @@ contract Delance {
     
     // permits the contract to receive ether
     receive() external payable {
+        //console.log("Delance receive:", msg.value);
         price += msg.value;
     }
     
