@@ -76,5 +76,10 @@ describe("Delance", () => {
             // freelancer can't be paid twice for the same work 
             await expect(elfreelancer.payRequest(0)).to.revertedWith("Already paid");
         });
+
+        it("should should not exceed balance", async () => {
+            let elfreelancer = delance.connect(freelancer);
+            await expect(elfreelancer.createRequest("Robotics delivery", 10)).to.revertedWith("Request amount cannot exceed current contract balance.")
+        });
     });
 });
