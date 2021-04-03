@@ -10,7 +10,7 @@ contract Delance {
     address payable public employer;
     address payable public freelancer;
     uint public deadline;
-    uint public price;
+    //uint public price;
     
     Request[] public requests;
     
@@ -42,16 +42,25 @@ contract Delance {
         freelancer = _freelancer;
         deadline = _deadline;
         employer = msg.sender;
-        price = msg.value;
+        //price = msg.value;
     }
     
     // permits the contract to receive ether
     receive() external payable {
         //console.log("Delance receive:", msg.value);
-        price += msg.value;
+        //price += msg.value;
     }
     
+    function getBalance() public view returns (uint) {
+        uint balance = address(this).balance;
+        //console.log("Contract balance is:", balance);
+        return balance;
+    }
+
     function createRequest(string memory _title, uint256 _amount) public onlyFreelancer {
+        uint balance = address(this).balance;
+        require(balance >= _amount, "Request amount cannot exceed current contract balance.");
+
         Request memory request = Request({
             title: _title,
             amount: _amount,
