@@ -2,6 +2,7 @@ import { HardhatUserConfig } from "hardhat/types";
 
 import "hardhat-typechain";
 import "@nomiclabs/hardhat-waffle";
+import "@nomiclabs/hardhat-ethers";
 
 const INFURA_API_KEY = process.env.INFURA_API_KEY || "";
 const RINKEBY_PRIVATE_KEY =
