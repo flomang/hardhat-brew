@@ -1,4 +1,4 @@
-import hardhat from "hardhat";
+import hardhat, { upgrades, ethers } from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import { Contract, Signer } from "ethers";
@@ -20,7 +20,21 @@ describe("Box", () => {
         imposter = accounts[1];
 
         boxContract = await waffle.deployContract(owner, contractJson);
+        await boxContract.deployed();
     });
+
+   // describe("upgrade", async () => {
+   //     it("should set the owner", async () => {
+   //     const Box = await ethers.getContractFactory("Box");
+   //     const BoxV2 = await ethers.getContractFactory("BoxV2");
+
+   //     const instance = await upgrades.deployProxy(Box, [42]);
+   //     boxContract = await upgrades.upgradeProxy(instance.address, BoxV2);
+   //         let ownerAddress: string = await owner.getAddress();
+   //         // employer should be able to send more ether to the contract
+   //         await expect(await boxContract.owner()).to.eq(ownerAddress);
+   //     });
+   // });
 
     describe("deployment", async () => {
         it("should set the owner", async () => {
