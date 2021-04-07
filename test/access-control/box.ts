@@ -1,75 +1,46 @@
-import hardhat, { upgrades, ethers } from "hardhat";
+import { upgrades, ethers } from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import { Contract, Signer } from "ethers";
-import contractJson from "../../artifacts/contracts/access-control/Box.sol/Box.json";
-
 
 chai.use(solidity);
 const { expect } = chai;
-const { waffle } = hardhat;
 
 describe("Box", () => {
     let owner: Signer;
     let imposter: Signer;
-    let boxContract: Contract;
+    let box: Contract;
 
     beforeEach(async () => {
         [owner, imposter] = await ethers.getSigners();
 
-        //ethers.getSigners()
-        //let accounts = waffle.provider.getWallets();
-        //owner = accounts[0];
-        //imposter = accounts[1];
-
-        //boxContract = await waffle.deployContract(owner, contractJson);
-        //await boxContract.deployed();
-
         const Box = await ethers.getContractFactory("Box");
-        console.log("Deploying Box...");
-        const box = await upgrades.deployProxy(Box, [42], { initializer: 'store' });
+        //console.log("Deploying Box...");
+        box = await upgrades.deployProxy(Box, [42], { initializer: 'store' });
 
         await box.deployed();
-        console.log("Box deployed to:", box.address);
-
-        boxContract = box;
+        //console.log("Box deployed to:", box.address);
     });
-
-   // describe("upgrade", async () => {
-   //     it("should set the owner", async () => {
-   //     const Box = await ethers.getContractFactory("Box");
-   //     const BoxV2 = await ethers.getContractFactory("BoxV2");
-
-   //     const instance = await upgrades.deployProxy(Box, [42]);
-   //     boxContract = await upgrades.upgradeProxy(instance.address, BoxV2);
-   //         let ownerAddress: string = await owner.getAddress();
-   //         // employer should be able to send more ether to the contract
-   //         await expect(await boxContract.owner()).to.eq(ownerAddress);
-   //     });
-   // });
 
     describe("deployment", async () => {
-        //it("should set the owner", async () => {
-        //    let ownerAddress: string = await owner.getAddress();
-        //    // employer should be able to send more ether to the contract
-        //    await expect(await boxContract.owner()).to.eq(ownerAddress);
-        //});
+        it("should set the original value", async () => {
+            await expect(await box.retrieve()).to.eq(42);
+        });
     });
 
-    describe("owner access", async () => {
-        it("should allow the owner to store values", async () => {
-            //let ownerAddress: string = await owner.getAddress();
-            // employer should be able to send more ether to the contract
-            await expect(await boxContract.store(123)).to.emit(boxContract, "ValueChanged").withArgs(123);
+    describe("functions", async () => {
+        it("should upgrade", async () => {
+            const BoxV2 = await ethers.getContractFactory("BoxV2");
+            //console.log("Upgrading Box...");
 
-            await expect(await boxContract.retrieve()).to.eq(123);
+            const box2 = await upgrades.upgradeProxy(box.address, BoxV2);
+            expect(box2.address).to.eq(box.address)
+            //console.log("Box upgraded");
         });
 
-        //it("should reject imposters", async () => {
-        //    let con = boxContract.connect(imposter);
-        //    //let ownerAddress: string = await owner.getAddress();
-        //    // employer should be able to send more ether to the contract
-        //    await expect(con.store(123)).to.revertedWith("Ownable: caller is not the owner");
-        //});
+        it("should allow a user to store values", async () => {
+            await expect(await box.store(123)).to.emit(box, "ValueChanged").withArgs(123);
+            await expect(await box.retrieve()).to.eq(123);
+        });
     });
 });

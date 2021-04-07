@@ -1,14 +1,23 @@
+// contracts/Box.sol
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract BoxV2 {
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
+contract AdminBox is Initializable {
     uint256 private value;
+    address private admin;
 
     // Emitted when the stored value changes
     event ValueChanged(uint256 newValue);
 
+    function initialize(address _admin) public initializer {
+        admin = _admin;
+    }
+
     // Stores a new value in the contract
     function store(uint256 newValue) public {
+        require(msg.sender == admin, "Adminbox: not admin");
         value = newValue;
         emit ValueChanged(newValue);
     }
