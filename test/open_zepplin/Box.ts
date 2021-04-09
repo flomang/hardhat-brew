@@ -14,7 +14,7 @@ describe("Box", () => {
     beforeEach(async () => {
         [owner, imposter] = await ethers.getSigners();
 
-        const Box = await ethers.getContractFactory("Box");
+        const Box = await ethers.getContractFactory("BoxV1");
         //console.log("Deploying Box...");
         box = await upgrades.deployProxy(Box, [42], { initializer: 'store' });
 

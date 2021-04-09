@@ -2,7 +2,7 @@ import hardhat from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import { Contract, Signer } from "ethers";
-import contractJson from "../artifacts/contracts/Delance.sol/Delance.json";
+import contractJson from "../../artifacts/contracts/basic_examples/Delance.sol/Delance.json";
 
 
 chai.use(solidity);

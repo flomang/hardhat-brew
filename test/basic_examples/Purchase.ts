@@ -1,9 +1,9 @@
 import hardhat from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
-import { Purchase } from "../typechain/Purchase";
+import { Purchase } from "../../typechain/Purchase";
 import { Contract, Signer } from "ethers";
-import contractJson from "../artifacts/contracts/Purchase.sol/Purchase.json";
+import contractJson from "../../artifacts/contracts/basic_examples/Purchase.sol/Purchase.json";
 
 
 chai.use(solidity);

@@ -1,8 +1,7 @@
-// contracts/Box.sol
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract Box {
+contract BoxV1 {
     uint256 private value;
 
     // Emitted when the stored value changes
