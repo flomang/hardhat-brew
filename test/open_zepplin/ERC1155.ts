@@ -35,7 +35,7 @@ describe("ERC1155", () => {
             let ownerAddress: string = await owner.getAddress();
             let playerAddress: string = await player.getAddress();
 
-            await expect (await game.safeTransferFrom(ownerAddress, playerAddress, 2, 1, "0x01")).to.emit(game, "TransferSingle");
+            await expect (await game.safeTransferFrom(ownerAddress, playerAddress, 2, 1, ethers.utils.toUtf8Bytes(""))).to.emit(game, "TransferSingle");
             await expect(await game.balanceOf(playerAddress, 2)).to.eq(1);
         });
     });

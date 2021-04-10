@@ -21,8 +21,7 @@ contract ERC1155 is ERC1155Upgradeable {
 
     function initialize() public initializer {
         //console.log("initialize:", msg.sender);
-
-        __ERC1155_init_unchained("https://game.example/api/item/{id}.json");
+        __ERC1155_init_unchained("");
         _mint(msg.sender, GOLD, 10**18, "");
         _mint(msg.sender, SILVER, 10**27, "");
         _mint(msg.sender, THORS_HAMMER, 1, "");
