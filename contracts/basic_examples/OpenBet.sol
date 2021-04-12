@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.3;
 
+import "hardhat/console.sol";
+
 contract OpenBet {
     uint256 public minimumBet;
     uint256 public totalBetOne;
     uint256 public totalBetTwo;
     uint256 public numberOfBets;
     uint256 public maxAmountOfBets = 1000;
+    bool locked = false;
 
     address payable[] public players;
 
@@ -15,11 +18,14 @@ contract OpenBet {
         uint16 teamSelected;
     }
 
+    event BetConfirmed(address player, uint256 amount, uint8 teamSelected);
+    event PrizeDistributed(uint256 numberOfWinners, uint256 numberOfLosers, uint totalPrize);
+
     // Address of the player and => the user info
     mapping(address => Player) public playerInfo;
 
     constructor() {
-        minimumBet = 100000000000000;
+        minimumBet = 3;
     }
 
     function checkPlayerExists(address player) public view returns (bool) {
@@ -31,10 +37,10 @@ contract OpenBet {
 
     function bet(uint8 _teamSelected) public payable {
         //The first require is used to check if the player already exist
-        require(!checkPlayerExists(msg.sender), "You have already played!");
+        require(!checkPlayerExists(msg.sender), "you have already placed your wager!");
         //The second one is used to see if the value sended by the player is
         //Higher than the minum value
-        require(msg.value >= minimumBet, "Value is less than min bet");
+        require(msg.value >= minimumBet, "value is less than min bet");
 
         //We set the player informations : amount of the bet and selected team
         playerInfo[msg.sender].amountBet = msg.value;
@@ -49,9 +55,13 @@ contract OpenBet {
         } else {
             totalBetTwo += msg.value;
         }
+
+        emit BetConfirmed(msg.sender, msg.value, _teamSelected);
     }
 
-    function distributePrizes(uint16 teamWinner) public {
+    function distributePrizes(uint16 _teamWinner) public {
+        require(!locked, "previous distribution in progress");
+
         address payable[1000] memory winners;
         //We have to create a temporary in memory array with fixed size
         //Let's choose 1000
@@ -66,36 +76,47 @@ contract OpenBet {
             playerAddress = players[i];
             //If the player selected the winner team
             //We add his address to the winners array
-            if (playerInfo[playerAddress].teamSelected == teamWinner) {
+            if (playerInfo[playerAddress].teamSelected == _teamWinner) {
                 winners[count] = playerAddress;
                 count++;
             }
         }
         //We define which bet sum is the Loser one and which one is the winner
-        if (teamWinner == 1) {
+        if (_teamWinner == 1) {
             LoserBet = totalBetTwo;
             WinnerBet = totalBetOne;
         } else {
             LoserBet = totalBetOne;
             WinnerBet = totalBetTwo;
         }
+        locked = true;
+
         //We loop through the array of winners, to give ethers to the winners
         for (uint256 j = 0; j < count; j++) {
             // Check that the address in this fixed array is not empty
             if (winners[j] != address(0)) add = winners[j];
             amountBet = playerInfo[add].amountBet;
+            //uint256 amountWon = (amountBet * (10000 + ((LoserBet * 10000) / WinnerBet))) / 10000;
+            uint256 amountWon = (amountBet / WinnerBet) * LoserBet;
+
+            //console.log(amountWon);
+            //console.log(amountBet);
+
             //Transfer the money to the user
-            winners[j].transfer(
-                (amountBet * (10000 + ((LoserBet * 10000) / WinnerBet))) / 10000
-            );
+            //winners[j].transfer(amountBet + amountWon);
+        
+            (bool success,) = winners[j].call{value:amountBet+amountWon}("");
+            require(success, "Transfer failed.");
         }
 
+        emit PrizeDistributed({numberOfWinners: count, numberOfLosers: players.length - count, totalPrize: LoserBet});
         delete playerInfo[playerAddress]; // Delete all the players
         //players.length = 0; // Delete all the players array
         LoserBet = 0; //reinitialize the bets
         WinnerBet = 0;
         totalBetOne = 0;
         totalBetTwo = 0;
+        locked = false;
     }
 
     function AmountOne() public view returns (uint256) {
