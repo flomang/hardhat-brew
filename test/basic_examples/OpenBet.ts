@@ -54,17 +54,16 @@ describe("OpenBet", () => {
         it("player one and two place opposing bets", async () => {
             let player1Con = bet.connect(player1);
             let player2Con = bet.connect(player2);
-            let player1Address = await player1.getAddress()
+            //let player1Address = await player1.getAddress()
 
             // player1 bets 3 ethers
-            expect(await player1Con.bet(1, { value: 3 })).to.emit(bet, "BetConfirmed");
-            expect(await player2Con.bet(2, { value: 7 })).to.emit(bet, "BetConfirmed");
+            await expect(await player1Con.bet(1, { value: 3 })).to.emit(bet, "BetConfirmed");
+            await expect(await player2Con.bet(2, { value: 7 })).to.emit(bet, "BetConfirmed");
 
-            expect(await bet.AmountOne()).to.eq(3);
-            expect(await bet.AmountTwo()).to.eq(7);
+            await expect(await bet.AmountOne()).to.eq(3);
+            await expect(await bet.AmountTwo()).to.eq(7);
 
-            expect(await bet.distributePrizes(1)).to.emit(bet, "PrizeDistributed").withArgs(1, 1, 7)
-
+            await expect(await bet.distributePrizes(1)).to.changeEtherBalance(player1, 10)
             //console.log(await player1.getBalance());
             //console.log(await player2.getBalance());
         });
