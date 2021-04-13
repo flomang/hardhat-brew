@@ -12,10 +12,11 @@ describe("OpenBet", () => {
     let owner: Signer;
     let player1: Signer;
     let player2: Signer;
+    let player3: Signer;
     let addrs;
 
     beforeEach(async () => {
-        [owner, player1, player2, ...addrs] = await ethers.getSigners();
+        [owner, player1, player2, player3, ...addrs] = await ethers.getSigners();
         const tokenFactory = await ethers.getContractFactory(
             "OpenBet",
             owner,
@@ -63,7 +64,10 @@ describe("OpenBet", () => {
             await expect(await bet.AmountOne()).to.eq(3);
             await expect(await bet.AmountTwo()).to.eq(7);
 
-            await expect(await bet.distributePrizes(1)).to.changeEtherBalance(player1, 10)
+            await expect(await player1Con.distributePrizes(1)).to.changeEtherBalance(player1, 10)
+
+            // can't call distribute again because the amounts are now drained
+            await expect(bet.distributePrizes(2)).to.revertedWith("bet one amount is zero");
             //console.log(await player1.getBalance());
             //console.log(await player2.getBalance());
         });

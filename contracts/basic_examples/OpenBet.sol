@@ -61,6 +61,9 @@ contract OpenBet {
 
     function distributePrizes(uint16 _teamWinner) public {
         require(!locked, "previous distribution in progress");
+        require(totalBetOne > 0, "bet one amount is zero");
+        require(totalBetTwo > 0, "bet two amount is zero");
+        require(checkPlayerExists(msg.sender), "players can distribute prizes");
 
         address payable[1000] memory winners;
         //We have to create a temporary in memory array with fixed size
