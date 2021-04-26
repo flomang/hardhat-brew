@@ -6,3 +6,4 @@ artifacts/
 coverage*
 .env
 .openzeppelin
+frontend/abi
