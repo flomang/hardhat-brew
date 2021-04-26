@@ -6,4 +6,5 @@ artifacts/
 coverage*
 .env
 .openzeppelin
-frontend/abi
+.vscode
+frontend-svelte/abi
