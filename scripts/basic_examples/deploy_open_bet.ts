@@ -23,7 +23,7 @@ async function main() {
 
   console.log(data);
   // save the abi for frontend use
-  fs.writeFileSync('frontend/abi/OpenBet.json', JSON.stringify(data));
+  fs.writeFileSync('frontend-svelte/abi/OpenBet.json', JSON.stringify(data));
 
   // The contract is NOT deployed yet; we must wait until it is mined
   await openBet.deployed();
