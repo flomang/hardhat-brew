@@ -31,19 +31,44 @@
 
 	$: checkAccount = $selectedAccount || '0x0000000000000000000000000000000000000000';
 	$: balance = $connected ? $web3.eth.getBalance(checkAccount) : '';
-	$: amount = async () => {
-		const id = $web3.eth.net.getId();
+	$: amountOne = async () => {
 		const instance = new $web3.eth.Contract(OpenBet.abi, OpenBet.address);
-		const recieved = await instance.methods.bet(1).send({
-		//	//gasPrice: $web3.utils.toHex($web3.utils.toWei('5', 'gwei')),
-		//	//gasLimit: $web3.utils.toHex('21000'),
-			from: $selectedAccount,
-			value: $web3.utils.toHex(420),
-		});
+		//const recieved = await instance.methods.bet(1).send({
+		////	//gasPrice: $web3.utils.toHex($web3.utils.toWei('5', 'gwei')),
+		////	//gasLimit: $web3.utils.toHex('21000'),
+		//	from: $selectedAccount,
+		//	value: $web3.utils.toHex(420),
+		//});
 
         //console.log(recieved);
 		return await instance.methods.AmountOne().call();
 		//return 10;
+	};
+
+	$: betOne = async () => {
+		const instance = new $web3.eth.Contract(OpenBet.abi, OpenBet.address);
+		const recieved = await instance.methods.bet(1).send({
+		////	//gasPrice: $web3.utils.toHex($web3.utils.toWei('5', 'gwei')),
+		////	//gasLimit: $web3.utils.toHex('21000'),
+			from: $selectedAccount,
+			value: $web3.utils.toHex(420),
+		});
+		console.log(recieved);
+	}
+
+	$: betTwo = async () => {
+		const instance = new $web3.eth.Contract(OpenBet.abi, OpenBet.address);
+		const recieved = await instance.methods.bet(2).send({
+		////	//gasPrice: $web3.utils.toHex($web3.utils.toWei('5', 'gwei')),
+		////	//gasLimit: $web3.utils.toHex('21000'),
+			from: $selectedAccount,
+			value: $web3.utils.toHex(320),
+		});
+	}
+
+	$: amountTwo = async () => {
+		const instance = new $web3.eth.Contract(OpenBet.abi, OpenBet.address);
+		return await instance.methods.AmountTwo().call();
 	};
 
 	onMount(async () => {
@@ -79,19 +104,26 @@
 		</p>
 
 		<p>
-			Balance:
-			{#await balance}
-				<span>waiting...</span>
-			{:then value}
-				<span>{value}</span>
-			{/await}
-
-			{#await amount()}
+			{#await amountOne()}
 				<span>amount waiting...</span>
 			{:then value}
-				<span>{value}</span>
+				<span>Amount One:{value}</span>
 			{/await}
 		</p>
+		<p>
+			{#await amountTwo()}
+				<span>amount waiting...</span>
+			{:then value}
+				<span>Amount Two:{value}</span>
+			{/await}
+		</p>
+		<p>
+			<button on:click="{betOne}">bet one </button> 
+		</p>
+		<p>
+			<button on:click="{betTwo}">bet two </button> 
+		</p>
+		
 		<!-- 
 		{#if $selectedAccount}
 			<p><button on:click="{sendTip}">send 0.01 {$nativeCurrency.symbol} tip to {tipAddress} (author)</button></p>
