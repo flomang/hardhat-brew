@@ -19,30 +19,22 @@
 	import OpenBet from '../config/OpenBet.json';
 	//import OpenBet from '../../artifacts/contracts/basic_examples/OpenBet.sol/OpenBet.json';
 
-	export let tipAddress;
-
-	const enable = () => ethStore.setProvider('ws://localhost:8545');
 	const enableBrowser = () => {
 		ethStore.setBrowserProvider();
-		//const contract = new $web3.eth.Contract(OpenBet.abi, '0x5FbDB2315678afecb367f032d93F642f64180aa3');
-		//console.log(contract.AmountOne());
 		console.log($connected);
 	};
 
 	$: checkAccount = $selectedAccount || '0x0000000000000000000000000000000000000000';
 	$: balance = $connected ? $web3.eth.getBalance(checkAccount) : '';
+
 	$: amountOne = async () => {
 		const instance = new $web3.eth.Contract(OpenBet.abi, OpenBet.address);
-		//const recieved = await instance.methods.bet(1).send({
-		////	//gasPrice: $web3.utils.toHex($web3.utils.toWei('5', 'gwei')),
-		////	//gasLimit: $web3.utils.toHex('21000'),
-		//	from: $selectedAccount,
-		//	value: $web3.utils.toHex(420),
-		//});
-
-        //console.log(recieved);
 		return await instance.methods.AmountOne().call();
-		//return 10;
+	};
+
+	$: amountTwo = async () => {
+		const instance = new $web3.eth.Contract(OpenBet.abi, OpenBet.address);
+		return await instance.methods.AmountTwo().call();
 	};
 
 	$: betOne = async () => {
@@ -66,20 +58,15 @@
 		});
 	}
 
-	$: amountTwo = async () => {
-		const instance = new $web3.eth.Contract(OpenBet.abi, OpenBet.address);
-		return await instance.methods.AmountTwo().call();
-	};
-
 	onMount(async () => {
 		console.log('mounted');
 		//console.log('Connecting to local hardhat Ethereum network...');
 		//await ethStore.setProvider('ws://localhost:8545');
 		if ($connected) {
-			console.log('connected what?');
+			//console.log('connected what?');
 			//const contract = new $web3.eth.Contract(OpenBet.abi, '0x5FbDB2315678afecb367f032d93F642f64180aa3');
 			//console.log(contract.AmountOne());
-			console.log('done');
+			//console.log('done');
 		}
 	});
 </script>
