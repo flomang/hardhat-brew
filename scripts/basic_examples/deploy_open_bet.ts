@@ -15,20 +15,22 @@ async function main() {
 
   const OpenBet = await ethers.getContractFactory("OpenBet");
   const openBet = await OpenBet.deploy();
-
-  const data = {
-    address: openBet.address,
-    abi: JSON.parse(openBet.interface.format('json').toString())
-  };
-
-  console.log(data);
-  // save the abi for frontend use
-  fs.writeFileSync('frontend-svelte/abi/OpenBet.json', JSON.stringify(data));
-
   // The contract is NOT deployed yet; we must wait until it is mined
   await openBet.deployed();
 
-  console.log('deployed!!');
+  // note: this abi does not work for some reason
+  // use the compiled abi in the artifacts dir instead
+  const abi = JSON.parse(openBet.interface.format('json').toString());
+  const data = {
+    address: openBet.address,
+    abi: abi 
+  };
+
+  console.log(data);
+  const file = "frontend-svelte/config/OpenBet.json";
+  // save the abi for frontend use
+  fs.writeFileSync(file, JSON.stringify(data));
+  console.log('output:', file);
 }
   
 main()
