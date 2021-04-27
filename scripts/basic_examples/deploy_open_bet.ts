@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+import { ethers, deployments } from "hardhat";
 import fs from "fs";
 
 // run this script via: 
@@ -15,20 +15,19 @@ async function main() {
 
   const OpenBet = await ethers.getContractFactory("OpenBet");
   const openBet = await OpenBet.deploy();
-  // The contract is NOT deployed yet; we must wait until it is mined
+  // The contract is NOT deployed yet we must wait until it is mined
   await openBet.deployed();
 
-  // note: this abi does not work for some reason
-  // use the compiled abi in the artifacts dir instead
-  const abi = JSON.parse(openBet.interface.format('json').toString());
+  const artifact = await deployments.getArtifact("OpenBet");
   const data = {
     address: openBet.address,
-    abi: abi 
+    abi: artifact.abi 
   };
 
   console.log(data);
-  const file = "frontend-svelte/config/OpenBet.json";
+
   // save the abi for frontend use
+  const file = "frontend-svelte/config/OpenBet.json";
   fs.writeFileSync(file, JSON.stringify(data));
   console.log('output:', file);
 }

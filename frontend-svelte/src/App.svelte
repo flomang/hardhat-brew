@@ -16,8 +16,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { ethStore, web3, selectedAccount, connected, chainName } from 'svelte-web3';
-	import config from '../config/OpenBet.json';
-	import OpenBet from '../../artifacts/contracts/basic_examples/OpenBet.sol/OpenBet.json';
+	import OpenBet from '../config/OpenBet.json';
+	//import OpenBet from '../../artifacts/contracts/basic_examples/OpenBet.sol/OpenBet.json';
 
 	export let tipAddress;
 
@@ -33,7 +33,7 @@
 	$: balance = $connected ? $web3.eth.getBalance(checkAccount) : '';
 	$: amount = async () => {
 		const id = $web3.eth.net.getId();
-		const instance = new $web3.eth.Contract(OpenBet.abi, config.address);
+		const instance = new $web3.eth.Contract(OpenBet.abi, OpenBet.address);
 		const recieved = await instance.methods.bet(1).send({
 		//	//gasPrice: $web3.utils.toHex($web3.utils.toWei('5', 'gwei')),
 		//	//gasLimit: $web3.utils.toHex('21000'),
