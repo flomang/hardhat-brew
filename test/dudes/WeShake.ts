@@ -8,19 +8,15 @@ const { expect } = chai;
 
 describe("WeShake", () => {
     let owner: Signer;
-    let imposter: Signer;
+    let person1: Signer;
+    let person2: Signer;
     let shake: Contract;
 
     beforeEach(async () => {
-        [owner, imposter] = await ethers.getSigners();
-        const ownerAddress = await owner.getAddress();
-
-        const Box = await ethers.getContractFactory("WeShake");
-        //console.log("Deploying AdminBox...");
-        shake = await upgrades.deployProxy(Box, [], { initializer: 'initialize' });
-
+        [owner, person1, person2] = await ethers.getSigners();
+        const WeShake = await ethers.getContractFactory("WeShake");
+        shake = await upgrades.deployProxy(WeShake, [], { initializer: 'initialize' });
         await shake.deployed();
-        //console.log("AdminBox deployed to:", box.address);
     });
 
     describe("deployment", async () => {
@@ -30,16 +26,25 @@ describe("WeShake", () => {
         });
     });
 
-    describe("owner should be able to agree", async () => {
-        it("should revert if the contract terms are not defined", async () => {
+    describe("the owner", async () => {
+        it("agree should revert if the contract terms are not defined", async () => {
             await expect(shake.agree("Tester", "One")).to.revertedWith("contract terms are undefined");
         });
 
-    //    it("should reject imposters that store values", async () => {
-    //        let con = box.connect(imposter);
-    //        //let ownerAddress: string = await owner.getAddress();
-    //        // employer should be able to send more ether to the contract
-    //        await expect(con.store(123)).to.revertedWith("Ownable: caller is not the owner");
-    //    });
+        it("should be able to set the terms", async () => {
+            let con = shake.connect(owner);
+            //let ownerAddress: string = await owner.getAddress();
+            // employer should be able to send more ether to the contract
+            await expect(await con.setTerms("Some terms!")).to.emit(shake, "NewTermsSet").withArgs("Some terms!");
+        });
+    });
+
+    describe("non owner", async () => {
+        it("can't set terms", async () => {
+            let con = shake.connect(person1);
+            //let ownerAddress: string = await owner.getAddress();
+            // employer should be able to send more ether to the contract
+            await expect(con.setTerms("Some terms!")).to.revertedWith("Ownable: caller is not the owner");
+        });
     });
 });
