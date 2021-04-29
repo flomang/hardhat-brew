@@ -1,7 +1,8 @@
 import { upgrades, ethers } from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
-import { Contract, Signer } from "ethers";
+import { Signer } from "ethers";
+import { WeShake, WeShakeInterface } from "../../typechain/WeShake";
 
 chai.use(solidity);
 const { expect } = chai;
@@ -10,12 +11,12 @@ describe("WeShake", () => {
     let owner: Signer;
     let person1: Signer;
     let person2: Signer;
-    let shake: Contract;
+    let shake: WeShake;
 
     beforeEach(async () => {
         [owner, person1, person2] = await ethers.getSigners();
         const WeShake = await ethers.getContractFactory("WeShake");
-        shake = await upgrades.deployProxy(WeShake, [], { initializer: 'initialize' });
+        shake = await upgrades.deployProxy(WeShake, [], { initializer: 'initialize' }) as WeShake;
         await shake.deployed();
     });
 
@@ -50,13 +51,12 @@ describe("WeShake", () => {
         it("can agree to terms", async () => {
             const con1 = shake.connect(owner); 
             const con2 = shake.connect(person1);
+            const ownerAddress = await owner.getAddress();
             const person1Address = await person1.getAddress();
 
             await expect(await con1.setTerms("Some terms!")).to.emit(shake, "NewTermsSet").withArgs("Some terms!");
-
-            //let ownerAddress: string = await owner.getAddress();
-            // employer should be able to send more ether to the contract
             await expect(await con2.agree("Keanu", "Willis")).to.emit(shake, "PersonAgreed").withArgs("Keanu", "Willis", person1Address);
+            await expect(await con1.agree("Buda", "Stanko")).to.emit(shake, "PersonAgreed").withArgs("Buda", "Stanko", ownerAddress);
         });
     });
 });

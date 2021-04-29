@@ -8,7 +8,9 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 contract WeShake is Initializable, OwnableUpgradeable {
     string public terms;
     address payable[] public users;
-    mapping(address => Person) public userInfo;
+
+    //mapping(address => Person) public userInfo;
+    Person[] public members; 
 
     struct Person {
         string firstName;
@@ -32,6 +34,10 @@ contract WeShake is Initializable, OwnableUpgradeable {
         return false;
     }
 
+    function getAllMembers() public view returns (Person[] memory) {
+        return members;
+    }
+
     // anybody can agree to the terms?
     function agree(string memory _firstName, string memory _lastName) public {
 
@@ -44,7 +50,8 @@ contract WeShake is Initializable, OwnableUpgradeable {
             lastName: _lastName
         });
 
-        userInfo[sender] = newUser;
+        //userInfo[sender] = newUser;
+        members.push(newUser);
         users.push(payable(sender));
 
         emit PersonAgreed(_firstName, _lastName, sender);
