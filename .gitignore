@@ -8,3 +8,4 @@ coverage*
 .openzeppelin
 .vscode
 frontend-svelte/config
+config/
