@@ -46,5 +46,17 @@ describe("WeShake", () => {
             // employer should be able to send more ether to the contract
             await expect(con.setTerms("Some terms!")).to.revertedWith("Ownable: caller is not the owner");
         });
+
+        it("can agree to terms", async () => {
+            const con1 = shake.connect(owner); 
+            const con2 = shake.connect(person1);
+            const person1Address = await person1.getAddress();
+
+            await expect(await con1.setTerms("Some terms!")).to.emit(shake, "NewTermsSet").withArgs("Some terms!");
+
+            //let ownerAddress: string = await owner.getAddress();
+            // employer should be able to send more ether to the contract
+            await expect(await con2.agree("Keanu", "Willis")).to.emit(shake, "PersonAgreed").withArgs("Keanu", "Willis", person1Address);
+        });
     });
 });
