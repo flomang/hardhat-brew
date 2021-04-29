@@ -1,6 +1,7 @@
 import { HardhatUserConfig } from "hardhat/types";
 
 import "hardhat-typechain";
+import "hardhat-deploy";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-ethers";
 import "@openzeppelin/hardhat-upgrades";
