@@ -16,9 +16,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { ethStore, web3, selectedAccount, connected, chainName } from 'svelte-web3';
-	import OpenBet from '../../../../config/OpenBet.json';
-
-	//import OpenBet from '../../artifacts/contracts/basic_examples/OpenBet.sol/OpenBet.json';
+	import WeShake from '../../../../config/WeShake.json';
 
 	const enableBrowser = () => {
 		ethStore.setBrowserProvider();
@@ -28,36 +26,22 @@
 	$: checkAccount = $selectedAccount || '0x0000000000000000000000000000000000000000';
 	$: balance = $connected ? $web3.eth.getBalance(checkAccount) : '';
 
-	$: amountOne = async () => {
-		const instance = new $web3.eth.Contract(OpenBet.abi, OpenBet.address);
-		return await instance.methods.AmountOne().call();
+	$: terms = async () => {
+		const instance = new $web3.eth.Contract(WeShake.abi, WeShake.address);
+		return await instance.methods.terms().call();
 	};
 
-	$: amountTwo = async () => {
-		const instance = new $web3.eth.Contract(OpenBet.abi, OpenBet.address);
-		return await instance.methods.AmountTwo().call();
+    $: setTerms = async () => {
+        console.log(WeShake.address);
+        console.log($selectedAccount);
+
+		const instance = new $web3.eth.Contract(WeShake.abi, WeShake.address);
+
+        const owner = await instance.methods.owner().call();
+        console.log(owner);
+
+		return await instance.methods.setTerms("Do the thing!").send({from: $selectedAccount});
 	};
-
-	$: betOne = async () => {
-		const instance = new $web3.eth.Contract(OpenBet.abi, OpenBet.address);
-		const recieved = await instance.methods.bet(1).send({
-		////	//gasPrice: $web3.utils.toHex($web3.utils.toWei('5', 'gwei')),
-		////	//gasLimit: $web3.utils.toHex('21000'),
-			from: $selectedAccount,
-			value: $web3.utils.toHex(420),
-		});
-		console.log(recieved);
-	}
-
-	$: betTwo = async () => {
-		const instance = new $web3.eth.Contract(OpenBet.abi, OpenBet.address);
-		const recieved = await instance.methods.bet(2).send({
-		////	//gasPrice: $web3.utils.toHex($web3.utils.toWei('5', 'gwei')),
-		////	//gasLimit: $web3.utils.toHex('21000'),
-			from: $selectedAccount,
-			value: $web3.utils.toHex(320),
-		});
-	}
 
 	onMount(async () => {
 		console.log('mounted');
@@ -91,26 +75,15 @@
 		</p>
 
 		<p>
-			{#await amountOne()}
-				<span>amount waiting...</span>
+			{#await terms()}
+				<span>terms waiting...</span>
 			{:then value}
-				<span>Amount One:{value}</span>
+				<span>current terms:{value}</span>
 			{/await}
 		</p>
-		<p>
-			{#await amountTwo()}
-				<span>amount waiting...</span>
-			{:then value}
-				<span>Amount Two:{value}</span>
-			{/await}
+      	<p>
+			<button on:click="{setTerms}">set the terms </button> 
 		</p>
-		<p>
-			<button on:click="{betOne}">bet one </button> 
-		</p>
-		<p>
-			<button on:click="{betTwo}">bet two </button> 
-		</p>
-		
 		<!-- 
 		{#if $selectedAccount}
 			<p><button on:click="{sendTip}">send 0.01 {$nativeCurrency.symbol} tip to {tipAddress} (author)</button></p>

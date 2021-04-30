@@ -1,4 +1,4 @@
-import { ethers, deployments } from "hardhat";
+import { ethers, deployments, upgrades } from "hardhat";
 import fs from "fs";
 
 // run this script via: 
@@ -12,22 +12,23 @@ async function main() {
   );
   
   console.log("Account balance:", (await deployer.getBalance()).toString());
+  
+  const WeShake = await ethers.getContractFactory("WeShake");
+  const shake = await upgrades.deployProxy(WeShake, [], { initializer: 'initialize' });
 
-  const OpenBet = await ethers.getContractFactory("WeShake");
-  const openBet = await OpenBet.deploy();
   // The contract is NOT deployed yet we must wait until it is mined
-  await openBet.deployed();
+  await shake.deployed();
 
   const artifact = await deployments.getArtifact("WeShake");
   const data = {
-    address: openBet.address,
+    address: shake.address,
     abi: artifact.abi 
   };
 
   console.log(data);
 
   // save the abi for frontend use
-  const file = "frontend-svelte/config/WeShake.json";
+  const file = "frontend-sveltekit/config/WeShake.json";
   fs.writeFileSync(file, JSON.stringify(data));
   console.log('output:', file);
 }
