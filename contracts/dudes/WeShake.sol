@@ -15,6 +15,7 @@ contract WeShake is Initializable, OwnableUpgradeable {
     struct Person {
         string firstName;
         string lastName;
+        address agreedFrom;
     }
 
     event NewTermsSet(string terms);

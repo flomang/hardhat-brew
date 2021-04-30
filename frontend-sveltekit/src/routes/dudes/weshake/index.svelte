@@ -1,18 +1,3 @@
-<style>
-	main {
-		text-align: center;
-		padding: 1em;
-		max-width: 240px;
-		margin: 0 auto;
-	}
-
-	@media (min-width: 640px) {
-		main {
-			max-width: none;
-		}
-	}
-</style>
-
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { ethStore, web3, selectedAccount, connected, chainName } from 'svelte-web3';
@@ -26,21 +11,25 @@
 	$: checkAccount = $selectedAccount || '0x0000000000000000000000000000000000000000';
 	$: balance = $connected ? $web3.eth.getBalance(checkAccount) : '';
 
-	$: terms = async () => {
+	$: getTerms = async () => {
 		const instance = new $web3.eth.Contract(WeShake.abi, WeShake.address);
 		return await instance.methods.terms().call();
 	};
 
-    $: setTerms = async () => {
-        console.log(WeShake.address);
-        console.log($selectedAccount);
-
+	$: setTerms = async () => {
 		const instance = new $web3.eth.Contract(WeShake.abi, WeShake.address);
+		return await instance.methods.setTerms('Do the thing!').send({ from: $selectedAccount });
+	};
 
-        const owner = await instance.methods.owner().call();
-        console.log(owner);
+	$: agree = async () => {
+		const instance = new $web3.eth.Contract(WeShake.abi, WeShake.address);
+		return await instance.methods.agree('Flow', 'Rido').send({ from: $selectedAccount });
+	};
 
-		return await instance.methods.setTerms("Do the thing!").send({from: $selectedAccount});
+	$: getMembers = async () => {
+		const instance = new $web3.eth.Contract(WeShake.abi, WeShake.address);
+		const members = await instance.methods.getAllMembers().call();
+		return members;
 	};
 
 	onMount(async () => {
@@ -57,32 +46,35 @@
 </script>
 
 <main>
-	<p>Web3 version: {$web3.version} </p>
-	<p>Connected: {$connected} </p>
-
-	{#if $web3.version}
+	<p>Connected: {$connected}</p>
+	{#if $web3.version && !$connected}
 		<p>
-			<button on:click="{enableBrowser}">connect to the browser window provider </button> (eg Metamask)
+			<button on:click={enableBrowser}>connect to the browser window provider </button> (eg Metamask)
 		</p>
 	{/if}
 
 	{#if $connected}
 		<p>
-			Connected chain: {$chainName}
-		</p>
-		<p>
-			Selected account: {$selectedAccount || 'not defined'}
-		</p>
-
-		<p>
-			{#await terms()}
+			{#await getTerms()}
 				<span>terms waiting...</span>
 			{:then value}
-				<span>current terms:{value}</span>
+				<span>WeShake terms: {value}</span>
 			{/await}
 		</p>
-      	<p>
-			<button on:click="{setTerms}">set the terms </button> 
+		<p>
+			{#await getMembers()}
+				<span>members waiting...</span>
+			{:then value}
+				{#each value as person}
+					<li>{person.firstName} {person.lastName}</li>
+				{/each}
+			{/await}
+		</p>
+		<p>
+			<button on:click={setTerms}>set the terms </button>
+		</p>
+		<p>
+			<button on:click={agree}>agree</button>
 		</p>
 		<!-- 
 		{#if $selectedAccount}
@@ -90,3 +82,18 @@
 		{/if} -->
 	{/if}
 </main>
+
+<style>
+	main {
+		text-align: center;
+		padding: 1em;
+		max-width: 240px;
+		margin: 0 auto;
+	}
+
+	@media (min-width: 640px) {
+		main {
+			max-width: none;
+		}
+	}
+</style>
