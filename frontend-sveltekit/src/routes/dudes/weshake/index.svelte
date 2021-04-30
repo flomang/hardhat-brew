@@ -66,7 +66,7 @@
 				<span>members waiting...</span>
 			{:then value}
 				{#each value as person}
-					<li>{person.firstName} {person.lastName}</li>
+					<li>{person.firstName} {person.lastName} agreed from: {person.addr}</li>
 				{/each}
 			{/await}
 		</p>

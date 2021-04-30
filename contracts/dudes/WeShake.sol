@@ -15,7 +15,7 @@ contract WeShake is Initializable, OwnableUpgradeable {
     struct Person {
         string firstName;
         string lastName;
-        address agreedFrom;
+        address addr;
     }
 
     event NewTermsSet(string terms);
@@ -48,10 +48,10 @@ contract WeShake is Initializable, OwnableUpgradeable {
         address sender = msg.sender;
         Person memory newUser = Person({
             firstName: _firstName,
-            lastName: _lastName
+            lastName: _lastName,
+            addr: msg.sender
         });
 
-        //userInfo[sender] = newUser;
         members.push(newUser);
         users.push(payable(sender));
 
