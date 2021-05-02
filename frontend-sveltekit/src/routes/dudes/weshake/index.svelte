@@ -3,72 +3,51 @@
 	import { ethStore, web3, selectedAccount, connected, chainName } from 'svelte-web3';
 	import WeShake from '../../../../config/WeShake.json';
 
-	const enableBrowser = () => {
-		ethStore.setBrowserProvider();
-		console.log($connected);
+	const WeShakeApp = {
+		web3: undefined,
+		accounts: undefined,
+		contract: undefined
 	};
+	let members = [];
+	let terms = 'undefined';
 
-	$: checkAccount = $selectedAccount || '0x0000000000000000000000000000000000000000';
-	$: balance = $connected ? $web3.eth.getBalance(checkAccount) : '';
-
-	$: getTerms = async () => {
-		const instance = new $web3.eth.Contract(WeShake.abi, WeShake.address);
-		return await instance.methods.terms().call();
-	};
+	//$: checkAccount = $selectedAccount || '0x0000000000000000000000000000000000000000';
+	//$: balance = $connected ? $web3.eth.getBalance(checkAccount) : '';
 
 	$: setTerms = async () => {
-		const instance = new $web3.eth.Contract(WeShake.abi, WeShake.address);
-		return await instance.methods.setTerms('Do the thing!').send({ from: $selectedAccount });
+		return await WeShakeApp.contract.methods.setTerms('Do the thing!').send({ from: $selectedAccount });
 	};
 
 	$: agree = async () => {
-		const instance = new $web3.eth.Contract(WeShake.abi, WeShake.address);
-		return await instance.methods.agree('Flow', 'Rido').send({ from: $selectedAccount });
+		return await WeShakeApp.contract.methods.agree('Flow', 'Rido').send({ from: $selectedAccount });
 	};
 
-	$: getMembers = async () => {
-		const instance = new $web3.eth.Contract(WeShake.abi, WeShake.address);
-		const members = await instance.methods.getAllMembers().call();
-		return members;
+	$: updateAccounts = async (accounts) => {
+		WeShakeApp.accounts = accounts;
 	};
 
 	onMount(async () => {
-		console.log('mounted');
-		//console.log('Connecting to local hardhat Ethereum network...');
-		//await ethStore.setProvider('ws://localhost:8545');
+		await ethStore.setBrowserProvider();
 		if ($connected) {
-			//console.log('connected what?');
-			//const contract = new $web3.eth.Contract(OpenBet.abi, '0x5FbDB2315678afecb367f032d93F642f64180aa3');
-			//console.log(contract.AmountOne());
-			//console.log('done');
+			window.ethereum.on('accountsChanged', updateAccounts);
+			WeShakeApp.web3 = $web3;
+			WeShakeApp.contract = new $web3.eth.Contract(WeShake.abi, WeShake.address);
+
+			members = await WeShakeApp.contract.methods.getAllMembers().call();
+			terms = await WeShakeApp.contract.methods.terms().call();
 		}
 	});
 </script>
 
 <main>
-	<p>Connected: {$connected}</p>
-	{#if $web3.version && !$connected}
-		<p>
-			<button on:click={enableBrowser}>connect to the browser window provider </button> (eg Metamask)
-		</p>
-	{/if}
-
 	{#if $connected}
 		<p>
-			{#await getTerms()}
-				<span>terms waiting...</span>
-			{:then value}
-				<span>WeShake terms: {value}</span>
-			{/await}
+			WeShake terms: {terms}
 		</p>
 		<p>
-			{#await getMembers()}
-				<span>members waiting...</span>
-			{:then value}
-				{#each value as person}
-					<li>{person.firstName} {person.lastName} agreed from: {person.addr}</li>
-				{/each}
-			{/await}
+			{#each members as person}
+				<li>{person.firstName} {person.lastName} agreed from: {person.addr}</li>
+			{/each}
 		</p>
 		<p>
 			<button on:click={setTerms}>set the terms </button>
@@ -76,10 +55,8 @@
 		<p>
 			<button on:click={agree}>agree</button>
 		</p>
-		<!-- 
-		{#if $selectedAccount}
-			<p><button on:click="{sendTip}">send 0.01 {$nativeCurrency.symbol} tip to {tipAddress} (author)</button></p>
-		{/if} -->
+	{:else}
+	  <p>Not connected!</p>
 	{/if}
 </main>
 
