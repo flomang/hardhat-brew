@@ -41,18 +41,13 @@
 			owner = await WeShakeApp.contract.methods.owner().call();
 		}
 	});
+	let checked = true;
 </script>
 
 <main>
 	{#if $connected}
-		<p>
+		<p class="text-2xl">
 			WeShake terms: {terms}
-		</p>
-		<p>
-			WeShake owner: {owner}
-		</p>
-		<p>
-			selected account: {$selectedAccount}
 		</p>
 		<p>
 			{#each members as person}
@@ -61,11 +56,11 @@
 		</p>
 		{#if owner.toLowerCase() == $selectedAccount}
 			<p>
-				<button on:click={setTerms}>set the terms </button>
+				<button on:click={setTerms}>New Terms</button>
 			</p>
 		{/if}
 		<p>
-			<button on:click={agree}>agree</button>
+			<button on:click={agree}>Agree</button>
 		</p>
 	{:else}
 		<p>Not connected!</p>
@@ -73,16 +68,4 @@
 </main>
 
 <style>
-	main {
-		text-align: center;
-		padding: 1em;
-		max-width: 240px;
-		margin: 0 auto;
-	}
-
-	@media (min-width: 640px) {
-		main {
-			max-width: none;
-		}
-	}
 </style>
