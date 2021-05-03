@@ -10,12 +10,15 @@
 	};
 	let members = [];
 	let terms = 'undefined';
+	let owner = '';
 
 	//$: checkAccount = $selectedAccount || '0x0000000000000000000000000000000000000000';
 	//$: balance = $connected ? $web3.eth.getBalance(checkAccount) : '';
 
 	$: setTerms = async () => {
-		return await WeShakeApp.contract.methods.setTerms('Do the thing!').send({ from: $selectedAccount });
+		return await WeShakeApp.contract.methods
+			.setTerms('Do the thing!')
+			.send({ from: $selectedAccount });
 	};
 
 	$: agree = async () => {
@@ -35,6 +38,7 @@
 
 			members = await WeShakeApp.contract.methods.getAllMembers().call();
 			terms = await WeShakeApp.contract.methods.terms().call();
+			owner = await WeShakeApp.contract.methods.owner().call();
 		}
 	});
 </script>
@@ -45,18 +49,26 @@
 			WeShake terms: {terms}
 		</p>
 		<p>
+			WeShake owner: {owner}
+		</p>
+		<p>
+			selected account: {$selectedAccount}
+		</p>
+		<p>
 			{#each members as person}
 				<li>{person.firstName} {person.lastName} agreed from: {person.addr}</li>
 			{/each}
 		</p>
-		<p>
-			<button on:click={setTerms}>set the terms </button>
-		</p>
+		{#if owner.toLowerCase() == $selectedAccount}
+			<p>
+				<button on:click={setTerms}>set the terms </button>
+			</p>
+		{/if}
 		<p>
 			<button on:click={agree}>agree</button>
 		</p>
 	{:else}
-	  <p>Not connected!</p>
+		<p>Not connected!</p>
 	{/if}
 </main>
 
