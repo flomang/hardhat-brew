@@ -46,7 +46,7 @@
 {#if mounted}
 	<div id="svelte-announcer" aria-live="assertive" aria-atomic="true">
 		{#if navigated}
-			Navigated to {title}
+			{title}
 		{/if}
 	</div>
 {/if}

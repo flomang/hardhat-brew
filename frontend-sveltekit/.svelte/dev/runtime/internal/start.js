@@ -166,7 +166,7 @@ class Router {
 		if (url.origin !== location.origin) return null;
 		if (!url.pathname.startsWith(this.base)) return null;
 
-		const path = url.pathname.slice(this.base.length) || '/';
+		const path = decodeURIComponent(url.pathname.slice(this.base.length) || '/');
 
 		const routes = this.routes.filter(([pattern]) => pattern.test(path));
 
@@ -982,6 +982,10 @@ class Renderer {
  *   };
  * }} opts */
 async function start({ paths, target, session, host, route, spa, hydrate }) {
+	if (import.meta.env.DEV && !target) {
+		throw new Error('Missing target element. See https://kit.svelte.dev/docs#configuration-target');
+	}
+
 	const router =
 		route &&
 		new Router({
