@@ -13,13 +13,12 @@ contract WeShake is Initializable, OwnableUpgradeable {
     Person[] public members; 
 
     struct Person {
-        string firstName;
-        string lastName;
+        string name;
         address addr;
     }
 
     event NewTermsSet(string terms);
-    event PersonAgreed(string firstName, string lastName, address fromAddress);
+    event PersonAgreed(string name, address fromAddress);
 
     // https://forum.openzeppelin.com/t/how-to-use-ownable-with-upgradeable-contract/3336
     function initialize() public initializer {
@@ -40,22 +39,21 @@ contract WeShake is Initializable, OwnableUpgradeable {
     }
 
     // anybody can agree to the terms?
-    function agree(string memory _firstName, string memory _lastName) public {
+    function agree(string memory _name) public {
 
         require(!checkUserExists(msg.sender), "you have already agreed to this contract!");
         require(keccak256(abi.encodePacked(terms)) != keccak256(abi.encodePacked("undefined")), "contract terms are undefined");
 
         address sender = msg.sender;
         Person memory newUser = Person({
-            firstName: _firstName,
-            lastName: _lastName,
+            name: _name,
             addr: msg.sender
         });
 
         members.push(newUser);
         users.push(payable(sender));
 
-        emit PersonAgreed(_firstName, _lastName, sender);
+        emit PersonAgreed(_name, sender);
     }
 
     // the owner is only allowed to set the contract terms
