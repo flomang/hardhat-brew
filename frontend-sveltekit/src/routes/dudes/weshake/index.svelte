@@ -1,12 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import {
-		ethStore,
-		web3,
-		selectedAccount,
-		connected,
-		chainName,
-	} from "svelte-web3";
+	import { ethStore, web3, selectedAccount, connected } from "svelte-web3";
 	import WeShake from "../../../../config/WeShake.json";
 
 	const WeShakeApp = {
@@ -39,6 +33,15 @@
 
 		members = await WeShakeApp.contract.methods.getAllMembers().call();
 		toggleAgreeModal();
+	};
+
+	$: alreadyAgreed = () => {
+		for (let i = 0; i < members.length; ++i) {
+			if (members.address == $selectedAccount) {
+				return true;
+			}
+		}
+		return false;
 	};
 
 	$: toggleModal = () => {
@@ -101,13 +104,15 @@
 						class="bg-indigo-300 shadow-sm text-white text-sm font-medium px-4 py-3 rounded hover:bg-indigo-700"
 						>Set Terms</button
 					>
-					<button
-						on:click={toggleAgreeModal}
-						type="submit"
-						class="bg-indigo-300 shadow-sm text-white text-sm font-medium px-4 py-3 border -ml-2 rounded rounded-l-none hover:bg-indigo-700"
-					>
-						Agree
-					</button>
+					{#if alreadyAgreed()}
+						<button
+							on:click={toggleAgreeModal}
+							type="submit"
+							class="bg-indigo-300 shadow-sm text-white text-sm font-medium px-4 py-3 border -ml-2 rounded rounded-l-none hover:bg-indigo-700"
+						>
+							Agree
+						</button>
+					{/if}
 				</div>
 				<div
 					class="bg-black bg-opacity-50 inset-0 absolute hidden justify-center items-center"
@@ -158,7 +163,7 @@
 						</div>
 					</div>
 				</div>
-			{:else}
+			{:else if alreadyAgreed()}
 				<div class="flex justify-center">
 					<button
 						on:click={toggleAgreeModal}
