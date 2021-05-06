@@ -16,16 +16,19 @@
 	};
 	let members = [];
 	let terms = "undefined";
+	let newTerms = "undefined";
 	let owner = "";
 
 	//$: checkAccount = $selectedAccount || '0x0000000000000000000000000000000000000000';
 	//$: balance = $connected ? $web3.eth.getBalance(checkAccount) : '';
 
 	$: setTerms = async () => {
+		await WeShakeApp.contract.methods
+			.setTerms(newTerms)
+			.send({ from: $selectedAccount });
+
+		terms = newTerms;
 		toggleModal();
-		//return await WeShakeApp.contract.methods
-		//	.setTerms("Do the thing!")
-		//	.send({ from: $selectedAccount });
 	};
 
 	$: agree = async () => {
@@ -55,8 +58,9 @@
 			);
 
 			members = await WeShakeApp.contract.methods.getAllMembers().call();
-			terms = await WeShakeApp.contract.methods.terms().call();
 			owner = await WeShakeApp.contract.methods.owner().call();
+			terms = await WeShakeApp.contract.methods.terms().call();
+			newTerms = terms;
 		}
 	});
 	let checked = true;
@@ -84,7 +88,7 @@
 			{#if owner.toLowerCase() == $selectedAccount}
 				<div class="flex justify-center items-center">
 					<button
-						on:click={setTerms}
+						on:click={toggleModal}
 						class="bg-indigo-300 shadow-sm text-white text-sm font-medium px-4 py-3 rounded hover:bg-indigo-700"
 						>Set Terms</button
 					>
@@ -101,7 +105,7 @@
 					id="overlay"
 				>
 					<div
-						class="bg-gray-200 max-w-sm py-2 px-2 rounded shadow-xl text-gray-800"
+						class="bg-white py-2 px-2 rounded shadow-xl text-gray-800"
 					>
 						<div class="flex justify-between items-center">
 							<h4 class="font-bold text-lg">Set Terms</h4>
@@ -121,14 +125,15 @@
 							>
 						</div>
 						<div class="mt-2 text-sm">
-							<p>
-								Lorem ipsum dolor sit, amet consectetur
-								adipisicing elit. Voluptatem excepturi soluta
-								consequatur tempore facere. Est, fugit. Saepe
-								architecto deserunt suscipit? Nihil maxime modi
-								impedit fugit, deleniti eveniet explicabo quas
-								numquam!
-							</p>
+							<form>
+								<div class="text-left">
+									<textarea
+										bind:value={newTerms}
+										class="block bg-gray-200 text-sm border border-gray-400 focus:outline-none focus:bg-gray-100 focus:border-gray-300 rounded"
+										name="terms"
+									/>
+								</div>
+							</form>
 						</div>
 						<div class="mt-3 flex justify-end space-x-3">
 							<button
@@ -137,6 +142,7 @@
 								>Cancel</button
 							>
 							<button
+								on:click={setTerms}
 								class="px-3 py-1 rounded bg-red-800 text-gray-200 hover:bg-red-600 "
 								>Submit</button
 							>
