@@ -31,7 +31,7 @@
 			.agree(name)
 			.send({ from: $selectedAccount });
 
-		members = await WeShakeApp.contract.methods.getAllMembers().call();
+		//members = await WeShakeApp.contract.methods.getAllMembers().call();
 		toggleAgreeModal();
 	};
 
@@ -81,6 +81,12 @@
 		console.log(
 			`${event} emitted: ${name} agreed from ${fromAddress} (block #${blockNumber})`
 		);
+
+		const mems = document.querySelector('#members');
+		const li = document.createElement('li');
+		const txt = document.createTextNode(`${name} (${fromAddress})`);
+		li.appendChild(txt);
+		mems.appendChild(li);
 	};
 
 	onMount(async () => {
@@ -93,7 +99,7 @@
 				WeShake.address
 			);
 
-			members = await WeShakeApp.contract.methods.getAllMembers().call();
+			//members = await WeShakeApp.contract.methods.getAllMembers().call();
 			owner = await WeShakeApp.contract.methods.owner().call();
 			terms = await WeShakeApp.contract.methods.terms().call();
 
@@ -114,7 +120,7 @@
 			</div>
 			<div>
 				<h1 class="text-lg flex justify-center">Members:</h1>
-				<ul class="bg-gray-300 p-4 rounded divide-y">
+				<ul id="members" class="bg-gray-300 p-4 rounded divide-y">
 					{#each members as person}
 						<li>
 							{person.name} ({person.addr})
@@ -130,7 +136,7 @@
 						class="bg-indigo-300 shadow-sm text-white text-sm font-medium px-4 py-3 rounded hover:bg-indigo-700"
 						>Set Terms</button
 					>
-					{#if alreadyAgreed()}
+					{#if !alreadyAgreed()}
 						<button
 							on:click={toggleAgreeModal}
 							type="submit"
@@ -189,7 +195,7 @@
 						</div>
 					</div>
 				</div>
-			{:else if alreadyAgreed()}
+			{:else if !alreadyAgreed()}
 				<div class="flex justify-center">
 					<button
 						on:click={toggleAgreeModal}
