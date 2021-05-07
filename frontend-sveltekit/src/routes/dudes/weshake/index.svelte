@@ -96,8 +96,10 @@
 			members = await WeShakeApp.contract.methods.getAllMembers().call();
 			owner = await WeShakeApp.contract.methods.owner().call();
 			terms = await WeShakeApp.contract.methods.terms().call();
+
 			newTerms = terms;
-			listenToAgreements(0);
+			const blockNumber = await $web3.eth.getBlockNumber();
+			listenToAgreements(blockNumber);
 		}
 	});
 	let checked = true;
