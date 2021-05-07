@@ -27,12 +27,16 @@
 	};
 
 	$: agree = async () => {
-		await WeShakeApp.contract.methods
-			.agree(name)
-			.send({ from: $selectedAccount });
+		try {
+			await WeShakeApp.contract.methods
+				.agree(name)
+				.send({ from: $selectedAccount });
 
-		//members = await WeShakeApp.contract.methods.getAllMembers().call();
-		toggleAgreeModal();
+			//members = await WeShakeApp.contract.methods.getAllMembers().call();
+			toggleAgreeModal();
+		} catch (error) {
+			alert(error.message);
+		}
 	};
 
 	$: alreadyAgreed = () => {
@@ -82,11 +86,20 @@
 			`${event} emitted: ${name} agreed from ${fromAddress} (block #${blockNumber})`
 		);
 
-		const mems = document.querySelector('#members');
-		const li = document.createElement('li');
-		const txt = document.createTextNode(`${name} (${fromAddress})`);
-		li.appendChild(txt);
-		mems.appendChild(li);
+		let found = false;
+		for (let i = 0; i < members.length; ++i) {
+			if (members[i].addr == fromAddress) {
+				found = true;
+			}
+		}
+
+		if (!found) {
+			const mems = document.querySelector("#members");
+			const li = document.createElement("li");
+			const txt = document.createTextNode(`${name} (${fromAddress})`);
+			li.appendChild(txt);
+			mems.appendChild(li);
+		}
 	};
 
 	onMount(async () => {
@@ -99,7 +112,7 @@
 				WeShake.address
 			);
 
-			//members = await WeShakeApp.contract.methods.getAllMembers().call();
+			members = await WeShakeApp.contract.methods.getAllMembers().call();
 			owner = await WeShakeApp.contract.methods.owner().call();
 			terms = await WeShakeApp.contract.methods.terms().call();
 
