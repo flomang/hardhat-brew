@@ -60,6 +60,29 @@
 		WeShakeApp.accounts = accounts;
 	};
 
+	$: listenToAgreements = (fromBlockNumber) => {
+		console.log("listening to agree");
+		WeShakeApp.contract.events.PersonAgreed(
+			{
+				fromBlock: fromBlockNumber || 0,
+			},
+			agreeListener
+		);
+	};
+
+	$: agreeListener = (err, contractEvent) => {
+		if (err) {
+			console.error("Agree listen error", err);
+			return;
+		}
+		console.log("heard something!");
+		const { event, returnValues, blockNumber } = contractEvent;
+		const { name, fromAddress } = returnValues;
+		console.log(
+			`${event} emitted: ${name} agreed from ${fromAddress} (block #${blockNumber})`
+		);
+	};
+
 	onMount(async () => {
 		await ethStore.setBrowserProvider();
 		if ($connected) {
@@ -74,6 +97,7 @@
 			owner = await WeShakeApp.contract.methods.owner().call();
 			terms = await WeShakeApp.contract.methods.terms().call();
 			newTerms = terms;
+			listenToAgreements(0);
 		}
 	});
 	let checked = true;
