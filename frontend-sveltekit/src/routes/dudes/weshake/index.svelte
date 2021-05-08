@@ -35,13 +35,19 @@
 			//members = await WeShakeApp.contract.methods.getAllMembers().call();
 			toggleAgreeModal();
 		} catch (error) {
-			alert(error.message);
+			if (error.message.includes("you have already agreed to this contract")) {
+				alert("You've already agreed!")
+			} else if (error.message.includes("User denied transaction signature")) {
+			    toggleAgreeModal();
+			} else {
+				console.error("agree error:", error.message);
+			}
 		}
 	};
 
 	$: alreadyAgreed = () => {
 		for (let i = 0; i < members.length; ++i) {
-			if (members.address == $selectedAccount) {
+			if (members[i].addr.toLowerCase() == $selectedAccount) {
 				return true;
 			}
 		}
