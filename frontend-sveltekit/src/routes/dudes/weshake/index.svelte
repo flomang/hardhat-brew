@@ -127,14 +127,8 @@
 					`${event} emitted: ${name} registered from ${fromAddress} (block #${blockNumber})`
 				);
 
-				let found = false;
-				for (let i = 0; i < members.length; ++i) {
-					if (members[i].addr == fromAddress) {
-						found = true;
-					}
-				}
-
-				if (!found) {
+		        const found = document.querySelector(`#${name}`);
+		        if (found == null) {
 					const mems = document.querySelector("#members");
 					const li = document.createElement("li");
 					const txt = document.createTextNode(
