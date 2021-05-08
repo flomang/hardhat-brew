@@ -29,7 +29,10 @@ describe("WeShake", () => {
 
     describe("the owner", async () => {
         it("agree should revert if the contract terms are not defined", async () => {
-            await expect(shake.agree("Tester", "One")).to.revertedWith("contract terms are undefined");
+            const ownerAddress = await owner.getAddress();
+            await expect(await shake.register("Keanu Willis")).to.emit(shake, "PersonRegistered").withArgs("Keanu Willis", ownerAddress);
+
+            await expect(shake.agree()).to.revertedWith("contract terms are undefined");
         });
 
         it("should be able to set the terms", async () => {
@@ -37,6 +40,34 @@ describe("WeShake", () => {
             //let ownerAddress: string = await owner.getAddress();
             // employer should be able to send more ether to the contract
             await expect(await con.setTerms("Some terms!")).to.emit(shake, "NewTermsSet").withArgs("Some terms!");
+        });
+
+        it("reset terms after agreement", async () => {
+            const con1 = shake.connect(owner); 
+            const con2 = shake.connect(person1);
+            const ownerAddress = await owner.getAddress();
+            const person1Address = await person1.getAddress();
+
+            await expect(await con1.setTerms("Some terms!")).to.emit(shake, "NewTermsSet").withArgs("Some terms!");
+
+            // registered users
+            await expect(await con1.register("Keanu Willis")).to.emit(shake, "PersonRegistered").withArgs("Keanu Willis", ownerAddress);
+            await expect(await con2.register("Buda Stanko")).to.emit(shake, "PersonRegistered").withArgs("Buda Stanko", person1Address);
+
+            await expect(await con1.agree()).to.emit(shake, "PersonAgreed").withArgs("Keanu Willis", ownerAddress);
+            await expect(await con2.agree()).to.emit(shake, "PersonAgreed").withArgs("Buda Stanko", person1Address);
+
+            let members = await con1.getAllMembers();
+            for (let i = 0; i < members.length; ++i) {
+                expect(members[i].agreed).to.eq(true);
+            }
+
+            await expect(await con1.setTerms("Some terms!")).to.emit(shake, "NewTermsSet").withArgs("Some terms!");
+
+            members = await con1.getAllMembers();
+            for (let i = 0; i < members.length; ++i) {
+                expect(members[i].agreed).to.eq(false);
+            }
         });
     });
 
@@ -55,8 +86,13 @@ describe("WeShake", () => {
             const person1Address = await person1.getAddress();
 
             await expect(await con1.setTerms("Some terms!")).to.emit(shake, "NewTermsSet").withArgs("Some terms!");
-            await expect(await con2.agree("Keanu", "Willis")).to.emit(shake, "PersonAgreed").withArgs("Keanu", "Willis", person1Address);
-            await expect(await con1.agree("Buda", "Stanko")).to.emit(shake, "PersonAgreed").withArgs("Buda", "Stanko", ownerAddress);
+
+            // registered users
+            await expect(await con1.register("Keanu Willis")).to.emit(shake, "PersonRegistered").withArgs("Keanu Willis", ownerAddress);
+            await expect(await con2.register("Buda Stanko")).to.emit(shake, "PersonRegistered").withArgs("Buda Stanko", person1Address);
+
+            await expect(await con1.agree()).to.emit(shake, "PersonAgreed").withArgs("Keanu Willis", ownerAddress);
+            await expect(await con2.agree()).to.emit(shake, "PersonAgreed").withArgs("Buda Stanko", person1Address);
         });
     });
 });

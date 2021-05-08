@@ -7,9 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract WeShake is Initializable, OwnableUpgradeable {
     string public terms;
-    address payable[] public users;
 
-    mapping(address => Person) public registry;
     Person[] public members; 
 
     struct Person {
@@ -31,14 +29,21 @@ contract WeShake is Initializable, OwnableUpgradeable {
     }
 
     function checkUserExists(address user) internal view returns (bool) {
-        for (uint256 i = 0; i < users.length; i++) {
-            if (users[i] == user) return true;
+        for (uint256 i = 0; i < members.length; i++) {
+            if (members[i].addr == user) return true;
         }
         return false;
     }
 
     function getAllMembers() public view returns (Person[] memory) {
         return members;
+    }
+
+    function findUserIndex(address fromAddress) internal view returns (int) {
+        for (uint i = 0; i < members.length; i++) {
+            if (members[i].addr == fromAddress) return int(i);
+        }
+        return -1;
     }
 
     function register(string memory _name) public {
@@ -51,8 +56,6 @@ contract WeShake is Initializable, OwnableUpgradeable {
         });
 
         members.push(newUser);
-        users.push(payable(sender));
-        registry[sender] = newUser;
         emit PersonRegistered(_name, sender);
     }
 
@@ -60,14 +63,17 @@ contract WeShake is Initializable, OwnableUpgradeable {
         require(checkUserExists(msg.sender), "not registered");
         require(keccak256(abi.encodePacked(terms)) != keccak256(abi.encodePacked("undefined")), "contract terms are undefined");
 
-        Person storage user = registry[msg.sender];
+        int index = findUserIndex(msg.sender);
+        Person storage user = members[uint(index)];
         user.agreed = true;
+
         emit PersonAgreed(user.name, msg.sender);
     }
 
     function disagree() public {
         require(checkUserExists(msg.sender), "not registered");
-        Person storage user = registry[msg.sender];
+        int index = findUserIndex(msg.sender);
+        Person storage user = members[uint(index)];
         user.agreed = false;
         emit PersonDisagreed(user.name, msg.sender);
     }
@@ -77,7 +83,7 @@ contract WeShake is Initializable, OwnableUpgradeable {
         terms = _terms;
 
         // setting new terms sets all members agreed to false
-        for (uint256 i = 0; i < members.length; i++) {
+        for (uint i = 0; i < members.length; i++) {
             members[i].agreed = false;
         }
 
