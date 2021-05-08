@@ -29,25 +29,65 @@
 	$: agree = async () => {
 		try {
 			await WeShakeApp.contract.methods
-				.agree(name)
+				.agree()
 				.send({ from: $selectedAccount });
 
 			//members = await WeShakeApp.contract.methods.getAllMembers().call();
-			toggleAgreeModal();
+			//toggleAgreeModal();
 		} catch (error) {
-			if (error.message.includes("you have already agreed to this contract")) {
-				alert("You've already agreed!")
-			} else if (error.message.includes("User denied transaction signature")) {
-			    toggleAgreeModal();
+			if (
+				error.message.includes(
+					"you have already agreed to this contract"
+				)
+			) {
+				alert("You've already agreed!");
+			} else if (
+				error.message.includes("User denied transaction signature")
+			) {
+				//toggleAgreeModal();
 			} else {
 				console.error("agree error:", error.message);
 			}
 		}
 	};
 
-	$: alreadyAgreed = () => {
+	$: register = async () => {
+		try {
+			await WeShakeApp.contract.methods
+				.register(name)
+				.send({ from: $selectedAccount });
+
+			toggleRegisterModal();
+		} catch (error) {
+			if (error.message.includes("you are already registered")) {
+				alert("You've already registered!");
+			} else if (
+				error.message.includes("User denied transaction signature")
+			) {
+				toggleRegisterModal();
+			} else {
+				console.error("register error:", error.message);
+			}
+		}
+	};
+
+	$: isRegistered = () => {
 		for (let i = 0; i < members.length; ++i) {
-			if (members[i].addr.toLowerCase() == $selectedAccount) {
+			let member = members[i];
+			if (member.addr.toLowerCase() == $selectedAccount) {
+				return true;
+			}
+		}
+		return false;
+	};
+
+	$: hasAgreed = () => {
+		for (let i = 0; i < members.length; ++i) {
+			let member = members[i];
+			if (
+				member.addr.toLowerCase() == $selectedAccount &&
+				member.agreed
+			) {
 				return true;
 			}
 		}
@@ -60,14 +100,51 @@
 		overlay.classList.toggle("hidden");
 	};
 
-	$: toggleAgreeModal = () => {
-		const overlay = document.querySelector("#agreeModal");
+	$: toggleRegisterModal = () => {
+		const overlay = document.querySelector("#registerModal");
 		overlay.classList.toggle("flex");
 		overlay.classList.toggle("hidden");
 	};
 
 	$: updateAccounts = async (accounts) => {
 		WeShakeApp.accounts = accounts;
+	};
+
+	$: listenToRegister = (fromBlockNumber) => {
+		console.log("listening to register");
+		WeShakeApp.contract.events.PersonRegistered(
+			{
+				fromBlock: fromBlockNumber || 0,
+			},
+			(err, contractEvent) => {
+				if (err) {
+					console.error("register listen error", err);
+					return;
+				}
+				const { event, returnValues, blockNumber } = contractEvent;
+				const { name, fromAddress } = returnValues;
+				console.log(
+					`${event} emitted: ${name} registered from ${fromAddress} (block #${blockNumber})`
+				);
+
+				let found = false;
+				for (let i = 0; i < members.length; ++i) {
+					if (members[i].addr == fromAddress) {
+						found = true;
+					}
+				}
+
+				if (!found) {
+					const mems = document.querySelector("#members");
+					const li = document.createElement("li");
+					const txt = document.createTextNode(
+						`${name} has not agreed (${fromAddress})`
+					);
+					li.appendChild(txt);
+					mems.appendChild(li);
+				}
+			}
+		);
 	};
 
 	$: listenToAgreements = (fromBlockNumber) => {
@@ -85,26 +162,17 @@
 			console.error("Agree listen error", err);
 			return;
 		}
-		console.log("heard something!");
 		const { event, returnValues, blockNumber } = contractEvent;
 		const { name, fromAddress } = returnValues;
 		console.log(
 			`${event} emitted: ${name} agreed from ${fromAddress} (block #${blockNumber})`
 		);
 
-		let found = false;
-		for (let i = 0; i < members.length; ++i) {
-			if (members[i].addr == fromAddress) {
-				found = true;
-			}
-		}
-
-		if (!found) {
-			const mems = document.querySelector("#members");
-			const li = document.createElement("li");
-			const txt = document.createTextNode(`${name} (${fromAddress})`);
-			li.appendChild(txt);
-			mems.appendChild(li);
+		const id = `#${name}`;
+		//const id = `#thing`;
+		const li = document.querySelector(id);
+		if (li != null) {
+			li.innerHTML = `${name} agreed (${fromAddress})`;
 		}
 	};
 
@@ -125,6 +193,7 @@
 			newTerms = terms;
 			const blockNumber = await $web3.eth.getBlockNumber();
 			listenToAgreements(blockNumber);
+			listenToRegister(blockNumber);
 		}
 	});
 	let checked = true;
@@ -141,8 +210,9 @@
 				<h1 class="text-lg flex justify-center">Members:</h1>
 				<ul id="members" class="bg-gray-300 p-4 rounded divide-y">
 					{#each members as person}
-						<li>
-							{person.name} ({person.addr})
+						<li id={person.name}>
+							{person.name}
+							{person.agreed ? "agreed" : "has not agreed"} ({person.addr})
 						</li>
 					{/each}
 				</ul>
@@ -155,9 +225,17 @@
 						class="bg-indigo-300 shadow-sm text-white text-sm font-medium px-4 py-3 rounded hover:bg-indigo-700"
 						>Set Terms</button
 					>
-					{#if !alreadyAgreed()}
+					{#if !isRegistered()}
 						<button
-							on:click={toggleAgreeModal}
+							on:click={toggleRegisterModal}
+							type="submit"
+							class="bg-indigo-300 shadow-sm text-white text-sm font-medium px-4 py-3 border -ml-2 rounded rounded-l-none hover:bg-indigo-700"
+						>
+							Register
+						</button>
+					{:else if !hasAgreed()}
+						<button
+							on:click={agree}
 							type="submit"
 							class="bg-indigo-300 shadow-sm text-white text-sm font-medium px-4 py-3 border -ml-2 rounded rounded-l-none hover:bg-indigo-700"
 						>
@@ -214,10 +292,20 @@
 						</div>
 					</div>
 				</div>
-			{:else if !alreadyAgreed()}
+			{:else if !isRegistered()}
 				<div class="flex justify-center">
 					<button
-						on:click={toggleAgreeModal}
+						on:click={toggleRegisterModal}
+						type="submit"
+						class="py-3 px-4 border border-transparent shadow-sm text-sm font-medium rounded text-white bg-indigo-300 hover:bg-indigo-700"
+					>
+						Register
+					</button>
+				</div>
+			{:else if !hasAgreed()}
+				<div class="flex justify-center">
+					<button
+						on:click={agree}
 						type="submit"
 						class="py-3 px-4 border border-transparent shadow-sm text-sm font-medium rounded text-white bg-indigo-300 hover:bg-indigo-700"
 					>
@@ -228,13 +316,13 @@
 
 			<div
 				class="bg-black bg-opacity-50 inset-0 absolute hidden justify-center items-center"
-				id="agreeModal"
+				id="registerModal"
 			>
 				<div class="bg-white py-2 px-2 rounded shadow-xl text-gray-800">
 					<div class="flex justify-between items-center">
-						<h4 class="font-bold text-lg">Agree</h4>
+						<h4 class="font-bold text-lg">Register</h4>
 						<svg
-							on:click={toggleAgreeModal}
+							on:click={toggleRegisterModal}
 							class="w-5 h-5 cursor-pointer hover:bg-gray-300 rounded-full"
 							fill="none"
 							stroke="currentColor"
@@ -262,12 +350,12 @@
 					</div>
 					<div class="mt-3 flex justify-end space-x-3">
 						<button
-							on:click={toggleAgreeModal}
+							on:click={toggleRegisterModal}
 							class="px-3 py-1 rounded hover:bg-red-300 hover:bg-opacity-40 hover:text-red-900"
 							>Cancel</button
 						>
 						<button
-							on:click={agree}
+							on:click={register}
 							class="px-3 py-1 rounded bg-red-800 text-gray-200 hover:bg-red-600 "
 							>Submit</button
 						>
