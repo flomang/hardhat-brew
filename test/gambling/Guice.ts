@@ -37,8 +37,8 @@ describe("Guice", () => {
             await expect(await user1con.createWager(desc, {value: amount})).to.emit(guice, "WagerCreated").withArgs(userAddress, desc, amount);
 
             let wager = await user1con.wagers(userAddress);
-            expect(wager.fromAddress).to.eq(userAddress);
-            expect(wager.amount).to.eq(amount);
+            expect(wager.player1Address).to.eq(userAddress);
+            expect(wager.player1Amount).to.eq(amount);
             expect(wager.description).to.eq(desc);
         });
     });
