@@ -31,8 +31,15 @@ describe("Guice", () => {
         it("should be able to be created", async () => {
             let userAddress: string = await user1.getAddress();
             let user1con = guice.connect(user1);
+            let desc = "I'm filthy rich!";
+            let amount = 10;
 
-            await expect(await user1con.createWager("I'm filthy rich!", {value: 10})).to.emit(guice, "WagerCreated").withArgs(userAddress, "I'm filthy rich!", 10);
+            await expect(await user1con.createWager(desc, {value: amount})).to.emit(guice, "WagerCreated").withArgs(userAddress, desc, amount);
+
+            let wager = await user1con.wagers(userAddress);
+            expect(wager.fromAddress).to.eq(userAddress);
+            expect(wager.amount).to.eq(amount);
+            expect(wager.description).to.eq(desc);
         });
     });
 });

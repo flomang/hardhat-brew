@@ -11,6 +11,7 @@ contract Guice is Initializable, OwnableUpgradeable {
     struct Wager {
         uint256 amount;
         string description;
+        address fromAddress;
     }
 
     event WagerCreated(address fromAdress, string description, uint256 amount);
@@ -26,7 +27,8 @@ contract Guice is Initializable, OwnableUpgradeable {
     function createWager(string memory _description) public payable {
         Wager memory wager = Wager({
             amount: msg.value,
-            description: _description 
+            description: _description,
+            fromAddress: msg.sender
         });
         wagers[msg.sender] = wager;
 
