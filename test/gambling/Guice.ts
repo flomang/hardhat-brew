@@ -26,4 +26,13 @@ describe("Guice", () => {
             await expect(await guice.owner()).to.eq(ownerAddress);
         });
     });
+
+    describe("wagers", async () => {
+        it("should be able to be created", async () => {
+            let userAddress: string = await user1.getAddress();
+            let user1con = guice.connect(user1);
+
+            await expect(await user1con.createWager("I'm filthy rich!", {value: 10})).to.emit(guice, "WagerCreated").withArgs(userAddress, "I'm filthy rich!", 10);
+        });
+    });
 });

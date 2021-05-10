@@ -6,11 +6,14 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract Guice is Initializable, OwnableUpgradeable {
-
+    mapping(address => Wager) public wagers;
+    
     struct Wager {
         uint256 amount;
-        string outcome;
+        string description;
     }
+
+    event WagerCreated(address fromAdress, string description, uint256 amount);
 
     constructor() {
     }
@@ -18,5 +21,15 @@ contract Guice is Initializable, OwnableUpgradeable {
     function initialize() public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
+    }
+
+    function createWager(string memory _description) public payable {
+        Wager memory wager = Wager({
+            amount: msg.value,
+            description: _description 
+        });
+        wagers[msg.sender] = wager;
+
+        emit WagerCreated(msg.sender, _description, msg.value);
     }
 }
