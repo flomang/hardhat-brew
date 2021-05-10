@@ -33,13 +33,21 @@ describe("Guice", () => {
             let user1con = guice.connect(user1);
             let desc = "I'm filthy rich!";
             let amount = 10;
+            let wagerID = 1;
 
-            await expect(await user1con.createWager(desc, {value: amount})).to.emit(guice, "WagerCreated").withArgs(userAddress, desc, amount);
+            await expect(await user1con.createWager(desc, {value: amount})).to.emit(guice, "WagerCreated").withArgs(wagerID, userAddress, desc, amount);
 
-            let wager = await user1con.wagers(userAddress);
+            let wager = await user1con.wagers(wagerID);
+            expect(wager.wagerID).to.eq(wagerID);
             expect(wager.player1Address).to.eq(userAddress);
             expect(wager.player1Amount).to.eq(amount);
             expect(wager.description).to.eq(desc);
+            expect(wager.status).to.eq(1);
+
+            await expect(await user1con.cancelWager(wager.wagerID)).to.emit(guice, "WagerCancelled").withArgs(wagerID);
+            wager = await user1con.wagers(wagerID);
+            expect(wager.status).to.eq(0);
+
         });
     });
 });
