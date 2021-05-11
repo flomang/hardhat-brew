@@ -10,14 +10,20 @@ contract Guice is Initializable, OwnableUpgradeable {
     uint256 public wagersCreated;
 
     enum WagerStatus{ CANCELLED, PENDING_ACCEPT, IN_PLAY, SETTLED}
+
+    struct WagerClaim {
+        address player;
+        bool result;
+        bool submitted;
+        uint256 amount;
+    }
+
     struct Wager {
         uint256 wagerID;
-        address player1Address;
-        uint256 player1Amount;
-        address player2Address;
-        uint256 player2Amount;
         string description;
         WagerStatus status;
+        WagerClaim maker;
+        WagerClaim taker;
     }
 
     event WagerCreated(uint256 wagerID, address fromAdress, string description, uint256 amount);
@@ -35,10 +41,10 @@ contract Guice is Initializable, OwnableUpgradeable {
 
         Wager memory wager;
         wager.wagerID = wagersCreated + 1;
-        wager.player1Address = msg.sender;
-        wager.player1Amount = msg.value;
         wager.description = _description;
         wager.status = WagerStatus.PENDING_ACCEPT;
+
+        wager.maker = WagerClaim({result: false, submitted: false, player: msg.sender, amount: msg.value});
 
         // map wager ID to the wager object
         wagers[wager.wagerID] = wager;
@@ -56,28 +62,53 @@ contract Guice is Initializable, OwnableUpgradeable {
         wager.status = WagerStatus.CANCELLED;
 
         // return the original amount wagered 
-        (bool success,) = wager.player1Address.call{value:wager.player1Amount}("");
+        (bool success,) = wager.maker.player.call{value:wager.maker.amount}("");
         require(success, "Transfer failed.");
 
         emit WagerCancelled(wagerID);
     }
 
-    function acceptWager(uint256 wagerID) public payable {
+    function acceptWager(uint256 _wagerID) public payable {
         // required accept amount should be non zero 
         require(msg.value > 0, "wager amount must be greater than 0");
 
-        Wager storage wager = wagers[wagerID];
+        Wager storage wager = wagers[_wagerID];
 
         // the sent amount must be less than or equal to the original wagered amount
-        require(msg.value <= wager.player1Amount, "wager must be less than player1 amount");
+        require(msg.value <= wager.maker.amount, "wager must be less than player1 amount");
 
         // only pending wagers can be accepted
         require(wager.status == WagerStatus.PENDING_ACCEPT, "the wager is no longer available");
 
-        wager.player2Address = msg.sender;
-        wager.player2Amount = msg.value;
         wager.status = WagerStatus.IN_PLAY;
+        wager.taker =  WagerClaim({result: false, submitted: false, player: msg.sender, amount: msg.value}); 
 
-        emit WagerAccepted(wagerID, msg.sender, wager.description, msg.value);
+        emit WagerAccepted(_wagerID, msg.sender, wager.description, msg.value);
+    }
+
+    function settleWager(uint256 _wagerID, bool _result) public {
+        Wager storage wager = wagers[_wagerID];
+    
+        // only pending wagers can be accepted
+        require(wager.status == WagerStatus.IN_PLAY, "the wager must be in play");
+        require(wager.maker.player == msg.sender || wager.taker.player == msg.sender, "only players of this wager can settle");
+
+        if (wager.maker.player == msg.sender) {
+            wager.maker.result = _result;
+            wager.maker.submitted = true;
+
+            if (wager.taker.submitted) {
+                console.log("settle");
+                wager.status = WagerStatus.SETTLED;
+            }
+        } else if (wager.taker.player == msg.sender) {
+            wager.taker.result = _result;
+            wager.taker.submitted = true;
+
+            if (wager.taker.submitted) {
+                console.log("settle");
+                wager.status = WagerStatus.SETTLED;
+            }
+        }
     }
 }
