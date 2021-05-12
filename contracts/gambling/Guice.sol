@@ -28,17 +28,25 @@ contract Guice is Initializable, OwnableUpgradeable {
 
     event WagerCreated(
         uint256 wagerID,
-        address fromAdress,
+        address makerAddress,
         string description,
         uint256 amount
     );
     event WagerCancelled(uint256 wagerID);
     event WagerAccepted(
         uint256 wagerID,
-        address fromAdress,
+        address takerAddress,
         string description,
         uint256 amount
     );
+    event WagerSettled(address winner, uint256 winnings);
+    event WagerForfeited(
+        uint256 wagerID,
+        uint256 amountForfeited,
+        bool makerResult,
+        bool takerResult
+    );
+    event WagerClaimSubmitted(uint256 wagerID, address player, bool result);
 
     function initialize() public initializer {
         __Context_init_unchained();
@@ -64,7 +72,12 @@ contract Guice is Initializable, OwnableUpgradeable {
         // map wager ID to the wager object
         wagers[wager.wagerID] = wager;
 
-        emit WagerCreated(wager.wagerID, msg.sender, _description, msg.value);
+        emit WagerCreated({
+            wagerID: wager.wagerID,
+            makerAddress: msg.sender,
+            description: _description,
+            amount: msg.value
+        });
     }
 
     function cancelWager(uint256 wagerID) public {
@@ -84,7 +97,7 @@ contract Guice is Initializable, OwnableUpgradeable {
             wager.maker.player.call{value: wager.maker.amount}("");
         require(success, "Transfer failed.");
 
-        emit WagerCancelled(wagerID);
+        emit WagerCancelled({wagerID: wagerID});
     }
 
     function acceptWager(uint256 _wagerID) public payable {
@@ -96,7 +109,7 @@ contract Guice is Initializable, OwnableUpgradeable {
         // the sent amount must be less than or equal to the original wagered amount
         require(
             msg.value <= wager.maker.amount,
-            "wager must be less than player1 amount"
+            "wager must be less than or equal to the maker amount"
         );
 
         // only pending wagers can be accepted
@@ -113,7 +126,12 @@ contract Guice is Initializable, OwnableUpgradeable {
             amount: msg.value
         });
 
-        emit WagerAccepted(_wagerID, msg.sender, wager.description, msg.value);
+        emit WagerAccepted({
+            wagerID: _wagerID,
+            takerAddress: msg.sender,
+            description: wager.description,
+            amount: msg.value
+        });
     }
 
     function settleWager(Wager storage wager) internal {
@@ -129,15 +147,29 @@ contract Guice is Initializable, OwnableUpgradeable {
                 // reward the maker
                 (bool success, ) = wager.maker.player.call{value: reward}("");
                 require(success, "reward maker failed");
+
+                emit WagerSettled({
+                    winner: wager.maker.player,
+                    winnings: wager.taker.amount
+                });
             } else {
                 console.log("the taker won");
 
-                uint256 reward = wager.taker.amount * 2;
+                uint256 reward = wager.taker.amount;
                 uint256 change = wager.maker.amount - reward;
 
-                // reward the taker
-                (bool success, ) = wager.taker.player.call{value: reward}("");
+                // reward the taker and send him back his amount
+                (bool success, ) =
+                    wager.taker.player.call{value: reward + wager.taker.amount}(
+                        ""
+                    );
                 require(success, "reward maker failed");
+
+                // the taker can only win up to his amount that
+                emit WagerSettled({
+                    winner: wager.taker.player,
+                    winnings: reward
+                });
 
                 if (change > 0) {
                     (success, ) = wager.maker.player.call{value: change}("");
@@ -145,7 +177,26 @@ contract Guice is Initializable, OwnableUpgradeable {
                 }
             }
         } else {
+            // the wager if forfeited if both disagree on the outcome
             wager.status = WagerStatus.FORFEITED;
+
+            // both parties lose the wager and the maker is returned any amount that was not bet.
+            uint256 change = wager.maker.amount - wager.taker.amount;
+
+            if (change > 0) {
+                (bool success, ) = wager.maker.player.call{value: change}("");
+                require(success, "change maker failed");
+            }
+        
+            // TODO send the remaining amount to an address pool for charity
+
+            uint256 forfeited = wager.taker.amount * 2;
+            emit WagerForfeited({
+                wagerID: wager.wagerID,
+                amountForfeited: forfeited,
+                makerResult: wager.maker.result,
+                takerResult: wager.taker.result
+            });
         }
     }
 
@@ -178,5 +229,7 @@ contract Guice is Initializable, OwnableUpgradeable {
                 settleWager(wager);
             }
         }
+
+        emit WagerClaimSubmitted(_wagerID, msg.sender, _result);
     }
 }
