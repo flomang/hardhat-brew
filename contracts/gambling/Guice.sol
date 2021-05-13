@@ -88,6 +88,10 @@ contract Guice is Initializable, OwnableUpgradeable {
             wager.status == WagerStatus.PENDING_ACCEPT,
             "the wager cannot be cancelled because it is in play"
         );
+        require(
+            wager.maker.player == msg.sender,
+            "no bueno"
+        );
 
         // in theory this combined with the require statement above should guard against re-entry
         wager.status = WagerStatus.CANCELLED;
@@ -187,7 +191,7 @@ contract Guice is Initializable, OwnableUpgradeable {
                 (bool success, ) = wager.maker.player.call{value: change}("");
                 require(success, "change maker failed");
             }
-        
+
             // TODO send the remaining amount to an address pool for charity
 
             uint256 forfeited = wager.taker.amount * 2;

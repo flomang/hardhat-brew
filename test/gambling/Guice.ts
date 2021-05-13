@@ -76,6 +76,30 @@ describe("Guice", () => {
             expect(wager.status).to.eq(2);
         });
 
+        it("can't be accepted when cancelled", async () => {
+            let user1Address: string = await user1.getAddress();
+            let user1con = guice.connect(user1);
+            let user2con = guice.connect(user2);
+            let desc = "Mistako!";
+            let amount1 = 10;
+            let amount2 = 7;
+            let wagerID = 1;
+
+            await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated").withArgs(wagerID, user1Address, desc, amount1).to.changeEtherBalance(user1, -10);;
+            await expect(await user1con.cancelWager(wagerID)).to.emit(guice, "WagerCancelled").withArgs(wagerID).to.changeEtherBalance(user1, 10);
+            await expect(user2con.acceptWager(wagerID, { value: amount2 })).to.revertedWith("the wager is no longer available");
+        });
+
+        it("can't be cancelled by takers", async () => {
+            let user1con = guice.connect(user1);
+            let user2con = guice.connect(user2);
+            let desc = "Yo soy suave!";
+            let wagerID = 1;
+
+            await user1con.createWager(desc, { value: 10 });
+            await expect(user2con.cancelWager(wagerID)).to.revertedWith("no bueno");
+        });
+
         it("can't be accepted when in play", async () => {
             let user1Address: string = await user1.getAddress();
             let user2Address: string = await user2.getAddress();
