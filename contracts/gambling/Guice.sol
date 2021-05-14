@@ -9,7 +9,7 @@ contract Guice is Initializable, OwnableUpgradeable {
     mapping(uint256 => Wager) public wagers;
     uint256 public wagersCreated;
 
-    enum WagerStatus {CANCELLED, PENDING_ACCEPT, IN_PLAY, SETTLED, FORFEITED}
+    enum WagerStatus {CANCELLED, PENDING_ACCEPT, IN_PLAY, SETTLED, FORFEITED, REFUNDED}
 
     struct WagerClaim {
         address player;
@@ -47,6 +47,7 @@ contract Guice is Initializable, OwnableUpgradeable {
         bool takerResult
     );
     event WagerClaimSubmitted(uint256 wagerID, address player, bool result);
+    event WagerRefunded(uint256 wagerID);
 
     function initialize() public initializer {
         __Context_init_unchained();
@@ -88,10 +89,7 @@ contract Guice is Initializable, OwnableUpgradeable {
             wager.status == WagerStatus.PENDING_ACCEPT,
             "the wager cannot be cancelled because it is in play"
         );
-        require(
-            wager.maker.player == msg.sender,
-            "no bueno"
-        );
+        require(wager.maker.player == msg.sender, "no bueno");
 
         // in theory this combined with the require statement above should guard against re-entry
         wager.status = WagerStatus.CANCELLED;
@@ -139,6 +137,7 @@ contract Guice is Initializable, OwnableUpgradeable {
     }
 
     function settleWager(Wager storage wager) internal {
+
         // a wager is settled when both maker and taker results agree
         if (wager.taker.result == wager.maker.result) {
             wager.status = WagerStatus.SETTLED;
@@ -235,5 +234,33 @@ contract Guice is Initializable, OwnableUpgradeable {
         }
 
         emit WagerClaimSubmitted(_wagerID, msg.sender, _result);
+    }
+
+    function refund(uint256 _wagerID) public {
+        Wager storage wager = wagers[_wagerID];
+
+        require(
+            wager.maker.player == msg.sender ||
+                wager.taker.player == msg.sender,
+            "no bueno"
+        );
+
+        require(
+            wager.status == WagerStatus.IN_PLAY, 
+            "the wager must still be in play"
+        );
+
+        wager.status = WagerStatus.REFUNDED;
+
+        (bool success, ) =
+            wager.maker.player.call{value: wager.maker.amount}("");
+        require(success, "refund maker failed");
+
+        (success, ) =
+            wager.taker.player.call{value: wager.taker.amount}("");
+        require(success, "refund taker failed");
+
+
+        emit WagerRefunded({wagerID: _wagerID});
     }
 }
