@@ -9,7 +9,7 @@ contract Guice is Initializable, OwnableUpgradeable {
     mapping(uint256 => Wager) public wagers;
     uint256 public wagersCreated;
 
-    enum WagerStatus {CANCELLED, PENDING_ACCEPT, IN_PLAY, SETTLED, FORFEITED, REFUNDED}
+    enum WagerStatus {CANCELLED, PENDING_ACCEPT, IN_PLAY, SETTLED, FORFEITED, ABORTED}
 
     struct WagerClaim {
         address player;
@@ -250,30 +250,32 @@ contract Guice is Initializable, OwnableUpgradeable {
     function abort(uint256 _wagerID) public {
         Wager storage wager = wagers[_wagerID];
 
+        // can only be done by maker or taker
         require(
             wager.maker.player == msg.sender ||
                 wager.taker.player == msg.sender,
             "no bueno"
         );
 
+        // must be still in play
         require(
             wager.status == WagerStatus.IN_PLAY, 
             "the wager must still be in play"
         );
-
-        // cannot refund if a result has been submitted. 
+      
+        // only if maker and taker both have not submitted
         require(
             !wager.taker.submitted && !wager.maker.submitted, 
             "results have been submitted"
         );
 
-        // can only refund when within 7 blocks of taker 
+        // can only abort when within 7 blocks of taker's block number 
         require(
             block.number - wager.taker.blockNumber <= 7, 
             "refund window has elapsed"
         );
 
-        wager.status = WagerStatus.REFUNDED;
+        wager.status = WagerStatus.ABORTED;
 
         (bool success, ) =
             wager.maker.player.call{value: wager.maker.amount}("");
