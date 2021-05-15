@@ -36,7 +36,7 @@ describe("Guice", () => {
             let amount = 10;
             let wagerID = 1;
 
-            await expect(await user1con.createWager(desc, { value: amount })).to.emit(guice, "WagerCreated").withArgs(wagerID, userAddress, desc, amount);
+            await expect(await user1con.createWager(desc, { value: amount })).to.emit(guice, "WagerCreated");
 
             let wager = await user1con.wagers(wagerID);
             expect(wager.wagerID).to.eq(wagerID);
@@ -53,8 +53,8 @@ describe("Guice", () => {
             let amount = 10;
             let wagerID = 1;
 
-            await expect(await user1con.createWager(desc, { value: amount })).to.emit(guice, "WagerCreated").withArgs(wagerID, userAddress, desc, amount);
-            await expect(await user1con.cancelWager(wagerID)).to.emit(guice, "WagerCancelled").withArgs(wagerID);
+            await expect(await user1con.createWager(desc, { value: amount })).to.emit(guice, "WagerCreated");
+            await expect(await user1con.cancelWager(wagerID)).to.emit(guice, "WagerCancelled");
             const wager = await user1con.wagers(wagerID);
             expect(wager.status).to.eq(0);
         });
@@ -69,8 +69,8 @@ describe("Guice", () => {
             let amount2 = 7;
             let wagerID = 1;
 
-            await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated").withArgs(wagerID, user1Address, desc, amount1);
-            await expect(await user2con.acceptWager(wagerID, { value: amount2 })).to.emit(guice, "WagerAccepted").withArgs(wagerID, user2Address, desc, amount2);
+            await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated");
+            await expect(await user2con.acceptWager(wagerID, { value: amount2 })).to.emit(guice, "WagerAccepted");
 
             const wager = await user1con.wagers(wagerID);
             expect(wager.status).to.eq(2);
@@ -85,8 +85,8 @@ describe("Guice", () => {
             let amount2 = 7;
             let wagerID = 1;
 
-            await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated").withArgs(wagerID, user1Address, desc, amount1).to.changeEtherBalance(user1, -10);;
-            await expect(await user1con.cancelWager(wagerID)).to.emit(guice, "WagerCancelled").withArgs(wagerID).to.changeEtherBalance(user1, 10);
+            await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated").to.changeEtherBalance(user1, -10);
+            await expect(await user1con.cancelWager(wagerID)).to.emit(guice, "WagerCancelled").to.changeEtherBalance(user1, 10);
             await expect(user2con.acceptWager(wagerID, { value: amount2 })).to.revertedWith("the wager is no longer available");
         });
 
@@ -111,8 +111,8 @@ describe("Guice", () => {
             let amount2 = 7;
             let wagerID = 1;
 
-            await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated").withArgs(wagerID, user1Address, desc, amount1);
-            await expect(await user2con.acceptWager(wagerID, { value: amount2 })).to.emit(guice, "WagerAccepted").withArgs(wagerID, user2Address, desc, amount2);
+            await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated");
+            await expect(await user2con.acceptWager(wagerID, { value: amount2 })).to.emit(guice, "WagerAccepted");
             await expect(user3con.acceptWager(wagerID, { value: amount2 })).to.revertedWith("the wager is no longer available");
         });
 
@@ -126,13 +126,13 @@ describe("Guice", () => {
             let amount2 = 3;
             let wagerID = 1;
 
-            await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated").withArgs(wagerID, user1Address, desc, amount1);
-            await expect(await user2con.acceptWager(wagerID, { value: amount2 })).to.emit(guice, "WagerAccepted").withArgs(wagerID, user2Address, desc, amount2);
+            await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated");
+            await expect(await user2con.acceptWager(wagerID, { value: amount2 })).to.emit(guice, "WagerAccepted");
 
-            await expect(await user1con.submitResult(wagerID, true)).to.emit(guice, "WagerClaimSubmitted").withArgs(wagerID, user1Address, true);
+            await expect(await user1con.submitResult(wagerID, true)).to.emit(guice, "WagerClaimSubmitted");
             await expect(await user2con.submitResult(wagerID, false))
-                .to.emit(guice, "WagerClaimSubmitted").withArgs(wagerID, user2Address, false)
-                .to.emit(guice, "WagerForfeited").withArgs(wagerID, amount2*2, true, false).to.changeEtherBalance(user1, 7);
+                .to.emit(guice, "WagerClaimSubmitted")
+                .to.emit(guice, "WagerForfeited").to.changeEtherBalance(user1, 7);
 
             const wager = await user1con.wagers(wagerID);
             expect(wager.status).to.eq(4);
@@ -148,11 +148,11 @@ describe("Guice", () => {
             let amount2 = 3;
             let wagerID = 1;
 
-            await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated").withArgs(wagerID, user1Address, desc, amount1);
-            await expect(await user2con.acceptWager(wagerID, { value: amount2 })).to.emit(guice, "WagerAccepted").withArgs(wagerID, user2Address, desc, amount2);
+            await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated");
+            await expect(await user2con.acceptWager(wagerID, { value: amount2 })).to.emit(guice, "WagerAccepted");
 
             await expect(await user2con.refund(wagerID))
-                .to.emit(guice, "WagerRefunded").withArgs(wagerID)
+                .to.emit(guice, "WagerRefunded")
                 .to.changeEtherBalances([user1,user2],  [10, 3]);
 
             const wager = await user1con.wagers(wagerID);

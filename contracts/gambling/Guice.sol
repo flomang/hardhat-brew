@@ -16,6 +16,7 @@ contract Guice is Initializable, OwnableUpgradeable {
         bool result;
         bool submitted;
         uint256 amount;
+        uint256 blockNumber;
     }
 
     struct Wager {
@@ -30,24 +31,27 @@ contract Guice is Initializable, OwnableUpgradeable {
         uint256 wagerID,
         address makerAddress,
         string description,
-        uint256 amount
+        uint256 amount,
+        uint256 atBlock
     );
-    event WagerCancelled(uint256 wagerID);
+    event WagerCancelled(uint256 wagerID, uint256 atBlock);
     event WagerAccepted(
         uint256 wagerID,
         address takerAddress,
         string description,
-        uint256 amount
+        uint256 amount,
+        uint256 atBlock
     );
-    event WagerSettled(address winner, uint256 winnings);
+    event WagerSettled(address winner, uint256 winnings, uint256 atBlock);
     event WagerForfeited(
         uint256 wagerID,
         uint256 amountForfeited,
         bool makerResult,
-        bool takerResult
+        bool takerResult,
+        uint256 atBlock
     );
-    event WagerClaimSubmitted(uint256 wagerID, address player, bool result);
-    event WagerRefunded(uint256 wagerID);
+    event WagerClaimSubmitted(uint256 wagerID, address player, bool result, uint256 atBlock);
+    event WagerRefunded(uint256 wagerID, uint256 atBlock);
 
     function initialize() public initializer {
         __Context_init_unchained();
@@ -67,7 +71,8 @@ contract Guice is Initializable, OwnableUpgradeable {
             result: false,
             submitted: false,
             player: msg.sender,
-            amount: msg.value
+            amount: msg.value,
+            blockNumber: block.number
         });
 
         // map wager ID to the wager object
@@ -77,7 +82,8 @@ contract Guice is Initializable, OwnableUpgradeable {
             wagerID: wager.wagerID,
             makerAddress: msg.sender,
             description: _description,
-            amount: msg.value
+            amount: msg.value,
+            atBlock: block.number
         });
     }
 
@@ -99,7 +105,7 @@ contract Guice is Initializable, OwnableUpgradeable {
             wager.maker.player.call{value: wager.maker.amount}("");
         require(success, "Transfer failed.");
 
-        emit WagerCancelled({wagerID: wagerID});
+        emit WagerCancelled({wagerID: wagerID, atBlock: block.number});
     }
 
     function acceptWager(uint256 _wagerID) public payable {
@@ -125,14 +131,16 @@ contract Guice is Initializable, OwnableUpgradeable {
             result: false,
             submitted: false,
             player: msg.sender,
-            amount: msg.value
+            amount: msg.value,
+            blockNumber: block.number
         });
 
         emit WagerAccepted({
             wagerID: _wagerID,
             takerAddress: msg.sender,
             description: wager.description,
-            amount: msg.value
+            amount: msg.value,
+            atBlock: block.number
         });
     }
 
@@ -153,7 +161,8 @@ contract Guice is Initializable, OwnableUpgradeable {
 
                 emit WagerSettled({
                     winner: wager.maker.player,
-                    winnings: wager.taker.amount
+                    winnings: wager.taker.amount,
+                    atBlock: block.number
                 });
             } else {
                 console.log("the taker won");
@@ -171,7 +180,8 @@ contract Guice is Initializable, OwnableUpgradeable {
                 // the taker can only win up to his amount that
                 emit WagerSettled({
                     winner: wager.taker.player,
-                    winnings: reward
+                    winnings: reward,
+                    atBlock: block.number
                 });
 
                 if (change > 0) {
@@ -198,7 +208,8 @@ contract Guice is Initializable, OwnableUpgradeable {
                 wagerID: wager.wagerID,
                 amountForfeited: forfeited,
                 makerResult: wager.maker.result,
-                takerResult: wager.taker.result
+                takerResult: wager.taker.result,
+                atBlock: block.number
             });
         }
     }
@@ -233,7 +244,7 @@ contract Guice is Initializable, OwnableUpgradeable {
             }
         }
 
-        emit WagerClaimSubmitted(_wagerID, msg.sender, _result);
+        emit WagerClaimSubmitted(_wagerID, msg.sender, _result, block.number);
     }
 
     function refund(uint256 _wagerID) public {
@@ -250,6 +261,12 @@ contract Guice is Initializable, OwnableUpgradeable {
             "the wager must still be in play"
         );
 
+        // cannot refund if a result has been submitted. 
+        require(
+            !wager.taker.submitted && !wager.maker.submitted, 
+            "results have been submitted"
+        );
+
         wager.status = WagerStatus.REFUNDED;
 
         (bool success, ) =
@@ -261,6 +278,6 @@ contract Guice is Initializable, OwnableUpgradeable {
         require(success, "refund taker failed");
 
 
-        emit WagerRefunded({wagerID: _wagerID});
+        emit WagerRefunded({wagerID: _wagerID, atBlock: block.number});
     }
 }
