@@ -3,6 +3,7 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import { Signer } from "ethers";
 import { Guice } from "../../typechain/Guice";
+import { TASK_ETHERSCAN_VERIFY } from "hardhat-deploy";
 
 chai.use(solidity);
 const { expect } = chai;
@@ -138,7 +139,7 @@ describe("Guice", () => {
             expect(wager.status).to.eq(4);
         });
 
-        it("can be refunded", async () => {
+        it("can be aborted", async () => {
             let user1Address: string = await user1.getAddress();
             let user2Address: string = await user2.getAddress();
             let user1con = guice.connect(user1);
@@ -151,7 +152,7 @@ describe("Guice", () => {
             await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated");
             await expect(await user2con.acceptWager(wagerID, { value: amount2 })).to.emit(guice, "WagerAccepted");
 
-            await expect(await user2con.refund(wagerID))
+            await expect(await user2con.abort(wagerID))
                 .to.emit(guice, "WagerRefunded")
                 .to.changeEtherBalances([user1,user2],  [10, 3]);
 
@@ -159,7 +160,7 @@ describe("Guice", () => {
             expect(wager.status).to.eq(5);
         });
 
-        it("cannot be refunded by other players", async () => {
+        it("cannot be aborted by other players", async () => {
             let user1con = guice.connect(user1);
             let user2con = guice.connect(user2);
             let user3con = guice.connect(user3);
@@ -168,7 +169,7 @@ describe("Guice", () => {
 
             await user1con.createWager(desc, { value: 10 });
             await user2con.acceptWager(wagerID, { value: 4 });
-            await expect(user3con.refund(wagerID)).to.revertedWith("no bueno");
+            await expect(user3con.abort(wagerID)).to.revertedWith("no bueno");
         });
     });
 });

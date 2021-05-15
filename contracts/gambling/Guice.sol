@@ -247,7 +247,7 @@ contract Guice is Initializable, OwnableUpgradeable {
         emit WagerClaimSubmitted(_wagerID, msg.sender, _result, block.number);
     }
 
-    function refund(uint256 _wagerID) public {
+    function abort(uint256 _wagerID) public {
         Wager storage wager = wagers[_wagerID];
 
         require(
@@ -265,6 +265,12 @@ contract Guice is Initializable, OwnableUpgradeable {
         require(
             !wager.taker.submitted && !wager.maker.submitted, 
             "results have been submitted"
+        );
+
+        // can only refund when within 7 blocks of taker 
+        require(
+            block.number - wager.taker.blockNumber <= 7, 
+            "refund window has elapsed"
         );
 
         wager.status = WagerStatus.REFUNDED;
