@@ -138,6 +138,27 @@ describe("SimpleWager", () => {
             expect(wager.status).to.eq(4);
         });
 
+        it("can be settled", async () => {
+            let user1Address: string = await user1.getAddress();
+            let user2Address: string = await user2.getAddress();
+            let user1con = guice.connect(user1);
+            let user2con = guice.connect(user2);
+            let desc = "Flo is awesome!";
+            let amount = 10;
+            let wagerID = 1;
+
+            await expect(await user1con.createWager(desc, { value: amount })).to.emit(guice, "WagerCreated");
+            await expect(await user2con.acceptWager(wagerID, { value: amount })).to.emit(guice, "WagerAccepted");
+
+            await expect(await user1con.submitResult(wagerID, true)).to.emit(guice, "WagerClaimSubmitted");
+            await expect(await user2con.submitResult(wagerID, true))
+                .to.emit(guice, "WagerSettled")
+                .to.changeEtherBalance(user1, 20);
+
+            const wager = await user1con.wagers(wagerID);
+            expect(wager.status).to.eq(3);
+        });
+
         it("can be aborted", async () => {
             let user1Address: string = await user1.getAddress();
             let user2Address: string = await user2.getAddress();

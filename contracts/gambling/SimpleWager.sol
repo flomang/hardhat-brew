@@ -145,31 +145,16 @@ contract SimpleWager is Initializable, OwnableUpgradeable {
             wager.status = WagerStatus.SETTLED;
 
             uint256 reward = wager.maker.amount + wager.taker.amount;
+            address payee = (wager.maker.result? wager.maker.player : wager.taker.player);
 
-            if (wager.maker.result) {
-                console.log("the maker won");
+            (bool success, ) = payee.call{value: reward}("");
+            require(success, "reward player failed");
+            emit WagerSettled({
+                winner: payee,
+                winnings: reward,
+                atBlock: block.number
+            });
 
-                // reward the maker
-                (bool success, ) = wager.maker.player.call{value: reward}("");
-                require(success, "reward maker failed");
-
-                emit WagerSettled({
-                    winner: wager.maker.player,
-                    winnings: reward,
-                    atBlock: block.number
-                });
-            } else {
-                console.log("the taker won");
-
-                (bool success, ) = wager.taker.player.call{value: reward}("");
-                require(success, "reward taker failed");
-
-                emit WagerSettled({
-                    winner: wager.taker.player,
-                    winnings: reward,
-                    atBlock: block.number
-                });
-            }
         } else {
             // the wager if forfeited if both disagree on the outcome
             wager.status = WagerStatus.FORFEITED;
