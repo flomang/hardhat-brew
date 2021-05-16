@@ -66,7 +66,7 @@ describe("SimpleWager", () => {
             let user2con = guice.connect(user2);
             let desc = "Pooperbowl wins!";
             let amount1 = 10;
-            let amount2 = 7;
+            let amount2 = 10;
             let wagerID = 1;
 
             await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated");
@@ -82,7 +82,7 @@ describe("SimpleWager", () => {
             let user2con = guice.connect(user2);
             let desc = "Mistako!";
             let amount1 = 10;
-            let amount2 = 7;
+            let amount2 = 10;
             let wagerID = 1;
 
             await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated").to.changeEtherBalance(user1, -10);
@@ -108,7 +108,7 @@ describe("SimpleWager", () => {
             let user3con = guice.connect(user3);
             let desc = "Pooperbowl wins!";
             let amount1 = 10;
-            let amount2 = 7;
+            let amount2 = 10;
             let wagerID = 1;
 
             await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated");
@@ -123,7 +123,7 @@ describe("SimpleWager", () => {
             let user2con = guice.connect(user2);
             let desc = "Pooperbowl wins!";
             let amount1 = 10;
-            let amount2 = 3;
+            let amount2 = 10;
             let wagerID = 1;
 
             await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated");
@@ -132,7 +132,7 @@ describe("SimpleWager", () => {
             await expect(await user1con.submitResult(wagerID, true)).to.emit(guice, "WagerClaimSubmitted");
             await expect(await user2con.submitResult(wagerID, false))
                 .to.emit(guice, "WagerClaimSubmitted")
-                .to.emit(guice, "WagerForfeited").to.changeEtherBalance(user1, 7);
+                .to.emit(guice, "WagerForfeited");
 
             const wager = await user1con.wagers(wagerID);
             expect(wager.status).to.eq(4);
@@ -145,7 +145,7 @@ describe("SimpleWager", () => {
             let user2con = guice.connect(user2);
             let desc = "Refund nosotros!";
             let amount1 = 10;
-            let amount2 = 3;
+            let amount2 = 10;
             let wagerID = 1;
 
             await expect(await user1con.createWager(desc, { value: amount1 })).to.emit(guice, "WagerCreated");
@@ -153,7 +153,7 @@ describe("SimpleWager", () => {
 
             await expect(await user2con.abort(wagerID))
                 .to.emit(guice, "WagerAborted")
-                .to.changeEtherBalances([user1,user2],  [10, 3]);
+                .to.changeEtherBalances([user1,user2],  [10, 10]);
 
             const wager = await user1con.wagers(wagerID);
             expect(wager.status).to.eq(5);
@@ -166,8 +166,8 @@ describe("SimpleWager", () => {
             let desc = "Refund scammer!";
             let wagerID = 1;
 
-            await user1con.createWager(desc, { value: 10 });
-            await user2con.acceptWager(wagerID, { value: 4 });
+            await user1con.createWager(desc, { value: 7 });
+            await user2con.acceptWager(wagerID, { value: 7 });
             await expect(user3con.abort(wagerID)).to.revertedWith("no bueno");
         });
     });

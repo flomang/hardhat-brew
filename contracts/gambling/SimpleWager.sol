@@ -109,16 +109,10 @@ contract SimpleWager is Initializable, OwnableUpgradeable {
     }
 
     function acceptWager(uint256 _wagerID) public payable {
-        // required accept amount should be non zero
-        require(msg.value > 0, "wager amount must be greater than 0");
-
         Wager storage wager = wagers[_wagerID];
 
-        // the sent amount must be less than or equal to the original wagered amount
-        require(
-            msg.value <= wager.maker.amount,
-            "wager must be less than or equal to the maker amount"
-        );
+        // required accept amount should be equal to maker amount 
+        require(msg.value == wager.maker.amount, "wager amount must be the same");
 
         // only pending wagers can be accepted
         require(
@@ -150,10 +144,10 @@ contract SimpleWager is Initializable, OwnableUpgradeable {
         if (wager.taker.result == wager.maker.result) {
             wager.status = WagerStatus.SETTLED;
 
+            uint256 reward = wager.maker.amount + wager.taker.amount;
+
             if (wager.maker.result) {
                 console.log("the maker won");
-
-                uint256 reward = wager.maker.amount + wager.taker.amount;
 
                 // reward the maker
                 (bool success, ) = wager.maker.player.call{value: reward}("");
@@ -161,45 +155,24 @@ contract SimpleWager is Initializable, OwnableUpgradeable {
 
                 emit WagerSettled({
                     winner: wager.maker.player,
-                    winnings: wager.taker.amount,
+                    winnings: reward,
                     atBlock: block.number
                 });
             } else {
                 console.log("the taker won");
 
-                uint256 reward = wager.taker.amount;
-                uint256 change = wager.maker.amount - reward;
+                (bool success, ) = wager.taker.player.call{value: reward}("");
+                require(success, "reward taker failed");
 
-                // reward the taker and send him back his amount
-                (bool success, ) =
-                    wager.taker.player.call{value: reward + wager.taker.amount}(
-                        ""
-                    );
-                require(success, "reward maker failed");
-
-                // the taker can only win up to his amount that
                 emit WagerSettled({
                     winner: wager.taker.player,
                     winnings: reward,
                     atBlock: block.number
                 });
-
-                if (change > 0) {
-                    (success, ) = wager.maker.player.call{value: change}("");
-                    require(success, "change maker failed");
-                }
             }
         } else {
             // the wager if forfeited if both disagree on the outcome
             wager.status = WagerStatus.FORFEITED;
-
-            // both parties lose the wager and the maker is returned any amount that was not bet.
-            uint256 change = wager.maker.amount - wager.taker.amount;
-
-            if (change > 0) {
-                (bool success, ) = wager.maker.player.call{value: change}("");
-                require(success, "change maker failed");
-            }
 
             // TODO send the remaining amount to an address pool for charity
 
