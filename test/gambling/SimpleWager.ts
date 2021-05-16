@@ -2,22 +2,22 @@ import { upgrades, ethers } from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import { Signer } from "ethers";
-import { Guice } from "../../typechain/Guice";
+import { SimpleWager } from "../../typechain/SimpleWager";
 
 chai.use(solidity);
 const { expect } = chai;
 
-describe("Guice", () => {
+describe("SimpleWager", () => {
     let owner: Signer;
     let user1: Signer;
     let user2: Signer;
     let user3: Signer;
-    let guice: Guice;
+    let guice: SimpleWager;
 
     beforeEach(async () => {
         [owner, user1, user2, user3] = await ethers.getSigners();
-        const juice = await ethers.getContractFactory("Guice");
-        guice = await upgrades.deployProxy(juice, [], { initializer: 'initialize' }) as Guice;
+        const juice = await ethers.getContractFactory("SimpleWager");
+        guice = await upgrades.deployProxy(juice, [], { initializer: 'initialize' }) as SimpleWager;
         await guice.deployed();
     });
 
