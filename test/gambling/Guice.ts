@@ -153,7 +153,7 @@ describe("Guice", () => {
             await expect(await user2con.acceptWager(wagerID, { value: amount2 })).to.emit(guice, "WagerAccepted");
 
             await expect(await user2con.abort(wagerID))
-                .to.emit(guice, "WagerRefunded")
+                .to.emit(guice, "WagerAborted")
                 .to.changeEtherBalances([user1,user2],  [10, 3]);
 
             const wager = await user1con.wagers(wagerID);

@@ -51,7 +51,7 @@ contract Guice is Initializable, OwnableUpgradeable {
         uint256 atBlock
     );
     event WagerClaimSubmitted(uint256 wagerID, address player, bool result, uint256 atBlock);
-    event WagerRefunded(uint256 wagerID, uint256 atBlock);
+    event WagerAborted(uint256 wagerID, uint256 atBlock);
 
     function initialize() public initializer {
         __Context_init_unchained();
@@ -247,6 +247,8 @@ contract Guice is Initializable, OwnableUpgradeable {
         emit WagerClaimSubmitted(_wagerID, msg.sender, _result, block.number);
     }
 
+
+    // players can abort within 7 blocks of taker block number
     function abort(uint256 _wagerID) public {
         Wager storage wager = wagers[_wagerID];
 
@@ -272,7 +274,7 @@ contract Guice is Initializable, OwnableUpgradeable {
         // can only abort when within 7 blocks of taker's block number 
         require(
             block.number - wager.taker.blockNumber <= 7, 
-            "refund window has elapsed"
+            "abort window must be within 7 blocks"
         );
 
         wager.status = WagerStatus.ABORTED;
@@ -285,7 +287,6 @@ contract Guice is Initializable, OwnableUpgradeable {
             wager.taker.player.call{value: wager.taker.amount}("");
         require(success, "refund taker failed");
 
-
-        emit WagerRefunded({wagerID: _wagerID, atBlock: block.number});
+        emit WagerAborted({wagerID: _wagerID, atBlock: block.number});
     }
 }
