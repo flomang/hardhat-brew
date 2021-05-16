@@ -9,7 +9,7 @@ contract SimpleWager is Initializable, OwnableUpgradeable {
     mapping(uint256 => Wager) public wagers;
     uint256 public wagersCreated;
 
-    enum WagerStatus {CANCELLED, PENDING_ACCEPT, IN_PLAY, SETTLED, FORFEITED, ABORTED}
+    enum WagerStatus {CANCELLED, PENDING_ACCEPT, IN_PLAY, SETTLED, FORFEITED, ABORTED, TERMINATED}
 
     struct WagerClaim {
         address player;
@@ -52,6 +52,7 @@ contract SimpleWager is Initializable, OwnableUpgradeable {
     );
     event WagerClaimSubmitted(uint256 wagerID, address player, bool result, uint256 atBlock);
     event WagerAborted(uint256 wagerID, uint256 atBlock);
+    event WagerTerminated(uint256 wagerID, uint256 atBlock);
 
     function initialize() public initializer {
         __Context_init_unchained();
@@ -139,19 +140,19 @@ contract SimpleWager is Initializable, OwnableUpgradeable {
     }
 
     function settleWager(Wager storage wager) internal {
+        uint256 wagerTotal = wager.maker.amount + wager.taker.amount;
 
         // a wager is settled when both maker and taker results agree
         if (wager.taker.result == wager.maker.result) {
             wager.status = WagerStatus.SETTLED;
 
-            uint256 reward = wager.maker.amount + wager.taker.amount;
             address payee = (wager.maker.result? wager.maker.player : wager.taker.player);
 
-            (bool success, ) = payee.call{value: reward}("");
+            (bool success, ) = payee.call{value: wagerTotal}("");
             require(success, "reward player failed");
             emit WagerSettled({
                 winner: payee,
-                winnings: reward,
+                winnings: wagerTotal,
                 atBlock: block.number
             });
 
@@ -161,10 +162,9 @@ contract SimpleWager is Initializable, OwnableUpgradeable {
 
             // TODO send the remaining amount to an address pool for charity
 
-            uint256 forfeited = wager.taker.amount * 2;
             emit WagerForfeited({
                 wagerID: wager.wagerID,
-                amountForfeited: forfeited,
+                amountForfeited: wagerTotal,
                 makerResult: wager.maker.result,
                 takerResult: wager.taker.result,
                 atBlock: block.number
@@ -205,6 +205,20 @@ contract SimpleWager is Initializable, OwnableUpgradeable {
         emit WagerClaimSubmitted(_wagerID, msg.sender, _result, block.number);
     }
 
+    function terminate(uint256 _wagerID) public onlyOwner {
+        Wager storage wager = wagers[_wagerID];
+        wager.status = WagerStatus.TERMINATED;
+
+        (bool success, ) =
+            wager.maker.player.call{value: wager.maker.amount}("");
+        require(success, "refund maker failed");
+
+        (success, ) =
+            wager.taker.player.call{value: wager.taker.amount}("");
+        require(success, "refund taker failed");
+
+        emit WagerTerminated({wagerID: _wagerID, atBlock: block.number});
+    }
 
     // players can abort within 7 blocks of taker block number
     function abort(uint256 _wagerID) public {
