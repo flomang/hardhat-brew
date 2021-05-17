@@ -63,8 +63,10 @@ contract SimpleWager is Initializable, OwnableUpgradeable {
     function createWager(string memory _description) public payable {
         require(msg.value > 0, "wager amount must be greater than 0");
 
+        wagersCreated += 1;
+
         Wager memory wager;
-        wager.wagerID = wagersCreated + 1;
+        wager.wagerID = wagersCreated;
         wager.description = _description;
         wager.status = WagerStatus.PENDING_ACCEPT;
 

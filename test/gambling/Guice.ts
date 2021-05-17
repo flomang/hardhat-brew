@@ -44,6 +44,8 @@ describe("Guice", () => {
             expect(wager.status).to.eq(1);
             expect(wager.maker.player).to.eq(userAddress);
             expect(wager.maker.amount).to.eq(amount);
+
+            expect(await user1con.wagersCreated()).to.eq(1);
         });
 
         it("can be cancelled", async () => {
