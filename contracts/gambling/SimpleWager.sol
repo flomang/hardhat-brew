@@ -5,27 +5,27 @@ import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
+enum WagerStatus {CANCELLED, PENDING_ACCEPT, IN_PLAY, SETTLED, FORFEITED, ABORTED, TERMINATED}
+
+struct WagerClaim {
+    address player;
+    bool result;
+    bool submitted;
+    uint256 amount;
+    uint256 blockNumber;
+}
+
+struct Wager {
+    uint256 wagerID;
+    string description;
+    WagerStatus status;
+    WagerClaim maker;
+    WagerClaim taker;
+}
+
 contract SimpleWager is Initializable, OwnableUpgradeable {
     mapping(uint256 => Wager) public wagers;
     uint256 public wagersCreated;
-
-    enum WagerStatus {CANCELLED, PENDING_ACCEPT, IN_PLAY, SETTLED, FORFEITED, ABORTED, TERMINATED}
-
-    struct WagerClaim {
-        address player;
-        bool result;
-        bool submitted;
-        uint256 amount;
-        uint256 blockNumber;
-    }
-
-    struct Wager {
-        uint256 wagerID;
-        string description;
-        WagerStatus status;
-        WagerClaim maker;
-        WagerClaim taker;
-    }
 
     event WagerCreated(
         uint256 wagerID,
